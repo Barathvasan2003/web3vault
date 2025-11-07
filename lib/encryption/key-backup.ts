@@ -26,7 +26,7 @@ export async function deriveKeyFromPassword(
     return await crypto.subtle.deriveKey(
         {
             name: 'PBKDF2',
-            salt: salt,
+            salt: salt.buffer as ArrayBuffer,
             iterations: 100000, // High iteration count for security
             hash: 'SHA-256',
         },
