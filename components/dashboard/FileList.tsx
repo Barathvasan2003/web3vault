@@ -815,7 +815,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                             {/* Direct Share Link Section - Simplified */}
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-300">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <span className="text-2xl">�</span>
+                                    <span className="text-2xl">🔗</span>
                                     <h4 className="font-bold text-gray-800 text-lg">Direct IPFS Share Link</h4>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-4">
@@ -824,10 +824,11 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                 <div className="space-y-3">
                                     <button
                                         onClick={() => {
-                                            // Generate simple share link without wallet address requirement
+                                            // Generate simple share link with all required parameters
                                             const params = new URLSearchParams({
                                                 cid: shareModal.cid,
-                                                key: shareModal.encryptionKey
+                                                key: shareModal.encryptionKey,
+                                                iv: shareModal.iv // Add IV parameter for decryption
                                             });
                                             const shareUrl = `${window.location.origin}/view?${params.toString()}`;
                                             setGeneratedShareLink(shareUrl);
@@ -845,9 +846,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         </div>
                                     )}
                                 </div>
-                            </div>
-
-                            {/* Warning Message */}
+                            </div>                            {/* Warning Message */}
                             <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
                                 <div className="flex items-start gap-3">
                                     <span className="text-xl">ℹ️</span>
