@@ -65,22 +65,55 @@ export function getIPFSClient(): IPFSHTTPClient | null {
 async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
     console.log('📤 Starting decentralized IPFS upload...');
 
-    // Try NFT.Storage (free decentralized storage)
+    // Try Web3.Storage first (most reliable)
+    const web3StorageKey = process.env.NEXT_PUBLIC_WEB3_STORAGE_KEY;
+    if (web3StorageKey) {
+        try {
+            console.log('🌐 Uploading to Web3.Storage (decentralized IPFS)...');
+            const blob = new Blob([data.buffer], { type: 'application/octet-stream' });
+
+            const response = await fetch('https://api.web3.storage/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${web3StorageKey}`,
+                    'X-NAME': 'encrypted_medical_file.bin'
+                },
+                body: blob,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('📋 Web3.Storage response:', result);
+                const cid = result.cid;
+
+                if (cid) {
+                    console.log(`✅ Uploaded to Web3.Storage IPFS: ${cid}`);
+                    console.log(`🌐 Accessible at: https://w3s.link/ipfs/${cid}`);
+                    console.log(`🌐 Also available at: https://ipfs.io/ipfs/${cid}`);
+                    return cid;
+                }
+            }
+            const errorText = await response.text();
+            console.warn('⚠️ Web3.Storage failed:', response.status, errorText);
+        } catch (error) {
+            console.warn('⚠️ Web3.Storage error:', error);
+        }
+    }
+
+    // Try NFT.Storage as fallback
     const nftStorageKey = process.env.NEXT_PUBLIC_NFT_STORAGE_KEY;
-    console.log('🔑 API Key available:', nftStorageKey ? `Yes (${nftStorageKey.substring(0, 10)}...)` : 'No');
+    console.log('🔑 NFT.Storage API Key available:', nftStorageKey ? `Yes (${nftStorageKey.substring(0, 10)}...)` : 'No');
     if (nftStorageKey) {
         try {
-            console.log('🌐 Uploading to NFT.Storage (decentralized IPFS)...');
-            const formData = new FormData();
+            console.log('🌐 Trying NFT.Storage (decentralized IPFS)...');
             const blob = new Blob([data.buffer], { type: 'application/octet-stream' });
-            formData.append('file', blob, 'encrypted_file.bin');
 
             const response = await fetch('https://api.nft.storage/upload', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${nftStorageKey}`
                 },
-                body: formData,
+                body: blob,
             });
 
             if (response.ok) {
@@ -97,12 +130,9 @@ async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
                 }
 
                 if (cid && typeof cid === 'string') {
-                    console.log(`✅ Uploaded to decentralized IPFS: ${cid}`);
+                    console.log(`✅ Uploaded to NFT.Storage IPFS: ${cid}`);
                     console.log(`🌐 Accessible globally: https://ipfs.io/ipfs/${cid}`);
                     console.log(`🔗 CID will be registered on Polkadot blockchain`);
-
-                    // Skip local backup - file is on decentralized IPFS network
-                    console.log('📦 File stored on decentralized IPFS (no local backup needed)');
 
                     return cid;
                 }
@@ -112,12 +142,11 @@ async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
         } catch (error) {
             console.error('❌ NFT.Storage upload failed:', error);
         }
-    } else {
-        console.warn('⚠️  NFT.Storage API key not found');
-        console.warn('📝 To enable decentralized storage:');
-        console.warn('   1. Get free API key: https://nft.storage');
-        console.warn('   2. Add to .env.local: NEXT_PUBLIC_NFT_STORAGE_KEY=your_key');
     }
+
+    console.warn('⚠️ All IPFS gateways failed. Please add API keys:');
+    console.warn('   1. Web3.Storage (recommended): https://web3.storage');
+    console.warn('   2. NFT.Storage: https://nft.storage');
 
     // Fallback: Generate deterministic CID and upload to server
     console.warn('⚠️ Public IPFS endpoints unavailable, using server storage');
