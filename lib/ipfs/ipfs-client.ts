@@ -85,8 +85,18 @@ async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
 
             if (response.ok) {
                 const result = await response.json();
-                const cid = result.value?.cid || result.cid;
-                if (cid) {
+                console.log('📋 NFT.Storage response:', result);
+
+                // NFT.Storage returns CID in different formats
+                let cid = result.value?.cid || result.cid;
+
+                // If CID is an object, convert to string
+                if (typeof cid === 'object' && cid !== null) {
+                    // CID object has toString() method or '/' property
+                    cid = cid.toString ? cid.toString() : cid['/'] || JSON.stringify(cid);
+                }
+
+                if (cid && typeof cid === 'string') {
                     console.log(`✅ Uploaded to decentralized IPFS: ${cid}`);
                     console.log(`🌐 Accessible globally: https://ipfs.io/ipfs/${cid}`);
                     console.log(`🔗 CID will be registered on Polkadot blockchain`);
