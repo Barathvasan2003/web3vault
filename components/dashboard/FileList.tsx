@@ -812,57 +812,48 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                 </div>
                             </div>
 
-                            {/* Grant Access Section */}
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-300">
+                            {/* Direct Share Link Section - Simplified */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-300">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <span className="text-2xl">🔐</span>
-                                    <h4 className="font-bold text-gray-800 text-lg">Grant Access to Specific Wallet</h4>
+                                    <span className="text-2xl">�</span>
+                                    <h4 className="font-bold text-gray-800 text-lg">Direct IPFS Share Link</h4>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-4">
-                                    Enter a Polkadot wallet address to grant them access to this file with the selected permissions above.
+                                    Share this link to give anyone access to download and decrypt this file.
                                 </p>
                                 <div className="space-y-3">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
-                                            Polkadot Wallet Address:
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={shareWalletAddress}
-                                            onChange={(e) => setShareWalletAddress(e.target.value)}
-                                            placeholder="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY (example)"
-                                            className="w-full px-4 py-3 bg-white border-2 border-blue-300 rounded-xl text-sm font-mono text-gray-800 focus:border-blue-500 focus:outline-none"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={handleGrantAccess}
-                                            disabled={!shareWalletAddress}
-                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${shareWalletAddress
-                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-lg'
-                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            ✅ Grant Access
-                                        </button>
-                                        <button
-                                            onClick={handleViewAccessList}
-                                            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-bold transition-all"
-                                        >
-                                            👥 View Access List
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            // Generate simple share link without wallet address requirement
+                                            const params = new URLSearchParams({
+                                                cid: shareModal.cid,
+                                                key: shareModal.encryptionKey
+                                            });
+                                            const shareUrl = `${window.location.origin}/view?${params.toString()}`;
+                                            setGeneratedShareLink(shareUrl);
+                                            navigator.clipboard.writeText(shareUrl);
+                                            alert('✅ Share link copied to clipboard!\n\n🔗 Link: ' + shareUrl + '\n\nAnyone with this link can download and decrypt the file.');
+                                        }}
+                                        className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-bold transition-all"
+                                    >
+                                        📋 Generate & Copy Share Link
+                                    </button>
+                                    {generatedShareLink && (
+                                        <div className="p-3 bg-white border-2 border-green-300 rounded-xl">
+                                            <p className="text-xs text-gray-600 mb-2">Share Link:</p>
+                                            <p className="text-xs font-mono text-gray-800 break-all">{generatedShareLink}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Warning Message */}
-                            <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl">
+                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
                                 <div className="flex items-start gap-3">
-                                    <span className="text-xl">⚠️</span>
-                                    <div className="text-sm text-yellow-800">
-                                        <p className="font-bold mb-1">Important Security Note:</p>
-                                        <p>Only wallets you explicitly grant access to can download this file. Use the "Grant Access" section above to share with specific people.
-                                            {shareOption !== 'permanent' && ' Access will expire based on your selected timeframe.'}</p>
+                                    <span className="text-xl">ℹ️</span>
+                                    <div className="text-sm text-blue-800">
+                                        <p className="font-bold mb-1">Security Note:</p>
+                                        <p>Anyone with the share link can access this file. Keep it secure!</p>
                                     </div>
                                 </div>
                             </div>
