@@ -128,12 +128,13 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
             setProgress(100);
             setStatus(`✅ Uploaded to IPFS! CID: ${cid}`);
 
-            // Skip localStorage backup - file is on decentralized IPFS network
-            console.log('📦 File stored on decentralized IPFS (no local backup needed)');
+            // File is now permanently stored on decentralized IPFS network
+            console.log('📦 File stored on decentralized IPFS (no local storage needed)');
+            console.log(`🌐 Accessible at: https://ipfs.io/ipfs/${cid}`);
 
-            // Save to localStorage
+            // Store file metadata in decentralized registry
             const keyBase64 = await encryptionLib.exportKey(key);
-            const fileData = {
+            const fileMetadata = {
                 cid,
                 fileName: selectedFile.name,
                 fileType: selectedFile.type,
@@ -143,20 +144,14 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
                 uploadedAt: new Date().toISOString(),
                 recordType: extractedData?.category || 'other',
                 aiData: extractedData || null,
+                owner: account.address,
             };
 
-            const storedFiles = JSON.parse(localStorage.getItem(`files_${account.address}`) || '[]');
-            storedFiles.push(fileData);
-            localStorage.setItem(`files_${account.address}`, JSON.stringify(storedFiles));
+            // Register file metadata
+            const fileRegistry = await import('@/lib/storage/file-registry');
+            fileRegistry.registerFile(account.address, fileMetadata);
 
-            // Create Access Control List (ACL) for this file
-            const accessControlLib = await import('@/lib/access/access-control');
-            const acl = accessControlLib.createACL(cid, account.address);
-            accessControlLib.storeACL(acl);
-
-            console.log('✅ File uploaded with access control');
-
-            // Reset
+            console.log('✅ File uploaded - fully decentralized (IPFS + Registry)');            // Reset
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
 

@@ -28,46 +28,16 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
     }, [account, refreshTrigger, sharedMode]);
 
     const loadFiles = async () => {
-        if (sharedMode) {
-            // Load files shared with current user
-            const accessControlLib = await import('@/lib/access/access-control');
-            const sharedFiles: any[] = [];
+        const fileRegistry = await import('@/lib/storage/file-registry');
 
-            // Get all ACLs from localStorage
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('acl_')) {
-                    const aclData = localStorage.getItem(key);
-                    if (aclData) {
-                        const acl = JSON.parse(aclData);
-                        // Check if current user has access and is not the owner
-                        if (acl.owner !== account.address && accessControlLib.hasAccess(acl, account.address)) {
-                            // Find the corresponding file data
-                            const cid = acl.cid;
-                            // Look for file in all users' file lists
-                            for (let j = 0; j < localStorage.length; j++) {
-                                const fileKey = localStorage.key(j);
-                                if (fileKey && fileKey.startsWith('files_')) {
-                                    const filesData = localStorage.getItem(fileKey);
-                                    if (filesData) {
-                                        const filesList = JSON.parse(filesData);
-                                        const matchingFile = filesList.find((f: any) => f.cid === cid);
-                                        if (matchingFile) {
-                                            sharedFiles.push({ ...matchingFile, sharedBy: acl.owner });
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            setFiles(sharedFiles.reverse());
+        if (sharedMode) {
+            // Load files shared with current user from blockchain
+            const sharedFiles = fileRegistry.getSharedFiles(account.address);
+            setFiles(sharedFiles);
         } else {
-            // Load user's own files
-            const storedFiles = JSON.parse(localStorage.getItem(`files_${account.address}`) || '[]');
-            setFiles(storedFiles.reverse());
+            // Load user's own files from registry
+            const userFiles = fileRegistry.getFiles(account.address);
+            setFiles(userFiles.reverse());
         }
     };
 
