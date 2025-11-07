@@ -243,7 +243,7 @@ export async function encryptAccessToken(
     const data = encoder.encode(JSON.stringify(token));
 
     // Simple encoding for demo (use proper encryption in production)
-    return arrayBufferToBase64(data);
+    return arrayBufferToBase64(data.buffer);
 }
 
 /**
