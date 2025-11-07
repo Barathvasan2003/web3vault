@@ -65,42 +65,48 @@ export function getIPFSClient(): IPFSHTTPClient | null {
 async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
     console.log('📤 Starting decentralized IPFS upload...');
 
-    // Try Web3.Storage first (most reliable)
-    const web3StorageKey = process.env.NEXT_PUBLIC_WEB3_STORAGE_KEY;
-    if (web3StorageKey) {
-        try {
-            console.log('🌐 Uploading to Web3.Storage (decentralized IPFS)...');
-            const blob = new Blob([data.buffer], { type: 'application/octet-stream' });
+    // Try Pinata first (100% free, no credit card required)
+    const pinataKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
+    const pinataSecret = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
 
-            const response = await fetch('https://api.web3.storage/upload', {
+    if (pinataKey && pinataSecret) {
+        try {
+            console.log('🌐 Uploading to Pinata (free IPFS pinning)...');
+            const formData = new FormData();
+            const blob = new Blob([data.buffer], { type: 'application/octet-stream' });
+            formData.append('file', blob, 'encrypted_medical_file.bin');
+
+            const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${web3StorageKey}`,
-                    'X-NAME': 'encrypted_medical_file.bin'
+                    'pinata_api_key': pinataKey,
+                    'pinata_secret_api_key': pinataSecret
                 },
-                body: blob,
+                body: formData,
             });
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('📋 Web3.Storage response:', result);
-                const cid = result.cid;
+                console.log('📋 Pinata response:', result);
+                const cid = result.IpfsHash;
 
                 if (cid) {
-                    console.log(`✅ Uploaded to Web3.Storage IPFS: ${cid}`);
-                    console.log(`🌐 Accessible at: https://w3s.link/ipfs/${cid}`);
+                    console.log(`✅ Uploaded to Pinata IPFS: ${cid}`);
+                    console.log(`🌐 Accessible at: https://gateway.pinata.cloud/ipfs/${cid}`);
                     console.log(`🌐 Also available at: https://ipfs.io/ipfs/${cid}`);
                     return cid;
                 }
             }
             const errorText = await response.text();
-            console.warn('⚠️ Web3.Storage failed:', response.status, errorText);
+            console.warn('⚠️ Pinata upload failed:', response.status, errorText);
         } catch (error) {
-            console.warn('⚠️ Web3.Storage error:', error);
+            console.warn('⚠️ Pinata error:', error);
         }
+    } else {
+        console.log('ℹ️ Pinata API keys not configured');
     }
 
-    // Try NFT.Storage as fallback
+    // Try NFT.Storage as fallback (also free)
     const nftStorageKey = process.env.NEXT_PUBLIC_NFT_STORAGE_KEY;
     console.log('🔑 NFT.Storage API Key available:', nftStorageKey ? `Yes (${nftStorageKey.substring(0, 10)}...)` : 'No');
     if (nftStorageKey) {
@@ -132,8 +138,6 @@ async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
                 if (cid && typeof cid === 'string') {
                     console.log(`✅ Uploaded to NFT.Storage IPFS: ${cid}`);
                     console.log(`🌐 Accessible globally: https://ipfs.io/ipfs/${cid}`);
-                    console.log(`🔗 CID will be registered on Polkadot blockchain`);
-
                     return cid;
                 }
             }
@@ -145,8 +149,8 @@ async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
     }
 
     console.warn('⚠️ All IPFS gateways failed. Please add API keys:');
-    console.warn('   1. Web3.Storage (recommended): https://web3.storage');
-    console.warn('   2. NFT.Storage: https://nft.storage');
+    console.warn('   1. Pinata (100% FREE, no credit card): https://pinata.cloud');
+    console.warn('   2. NFT.Storage (free): https://nft.storage');
 
     // Fallback: Generate deterministic CID and upload to server
     console.warn('⚠️ Public IPFS endpoints unavailable, using server storage');
@@ -156,9 +160,7 @@ async function uploadViaHTTP(data: Uint8Array<ArrayBuffer>): Promise<string> {
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     const base58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    let cid = 'Qm';
-
-    for (let i = 0; i < 44; i++) {
+    let cid = 'Qm'; for (let i = 0; i < 44; i++) {
         const index = parseInt(hashHex.substr(i % hashHex.length, 2), 16) % base58chars.length;
         cid += base58chars[index];
     }
