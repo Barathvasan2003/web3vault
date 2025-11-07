@@ -114,7 +114,7 @@ export async function encryptMedicalFile(
 
     // Encrypt
     const encryptedData = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
+        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
         key,
         combined
     );
@@ -140,7 +140,7 @@ export async function decryptMedicalFile(
 }> {
     // Decrypt
     const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
+        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
         key,
         encryptedData
     );
