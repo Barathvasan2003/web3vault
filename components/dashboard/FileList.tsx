@@ -828,7 +828,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                             const params = new URLSearchParams({
                                                 cid: shareModal.cid,
                                                 key: shareModal.encryptionKey,
-                                                iv: shareModal.iv // Add IV parameter for decryption
+                                                iv: JSON.stringify(shareModal.iv) // Convert IV array to JSON string
                                             });
                                             const shareUrl = `${window.location.origin}/view?${params.toString()}`;
                                             setGeneratedShareLink(shareUrl);

@@ -1,6 +1,6 @@
 /**
  * Decentralized File Registry
- * Stores file metadata temporarily in session
+ * Stores file metadata in localStorage for persistence
  * Future: Will be replaced with blockchain smart contract storage
  */
 
@@ -15,14 +15,14 @@ export function registerFile(walletAddress: string, fileMetadata: any): void {
     userFiles.push(fileMetadata);
     fileRegistry.set(walletAddress, userFiles);
 
-    // Also persist in sessionStorage for page refreshes
+    // Persist in localStorage so files remain after logout/login
     try {
-        sessionStorage.setItem(
+        localStorage.setItem(
             `files_${walletAddress}`,
             JSON.stringify(userFiles)
         );
     } catch (e) {
-        console.warn('Session storage failed, using memory only');
+        console.warn('localStorage failed, using memory only');
     }
 
     console.log(`📝 Registered file ${fileMetadata.cid} for ${walletAddress.slice(0, 8)}...`);
@@ -35,10 +35,10 @@ export function getFiles(walletAddress: string): any[] {
     // Try memory first
     let files = fileRegistry.get(walletAddress);
 
-    // If not in memory, try sessionStorage
+    // If not in memory, try localStorage (persists after logout)
     if (!files) {
         try {
-            const stored = sessionStorage.getItem(`files_${walletAddress}`);
+            const stored = localStorage.getItem(`files_${walletAddress}`);
             if (stored) {
                 const parsed = JSON.parse(stored);
                 if (Array.isArray(parsed)) {
@@ -47,7 +47,7 @@ export function getFiles(walletAddress: string): any[] {
                 }
             }
         } catch (e) {
-            console.warn('Failed to load from session storage');
+            console.warn('Failed to load from localStorage');
         }
     }
 
@@ -64,12 +64,12 @@ export function removeFile(walletAddress: string, cid: string): void {
     fileRegistry.set(walletAddress, updated);
 
     try {
-        sessionStorage.setItem(
+        localStorage.setItem(
             `files_${walletAddress}`,
             JSON.stringify(updated)
         );
     } catch (e) {
-        console.warn('Session storage update failed');
+        console.warn('localStorage update failed');
     }
 }
 
@@ -79,7 +79,7 @@ export function removeFile(walletAddress: string, cid: string): void {
 export function clearFiles(walletAddress: string): void {
     fileRegistry.delete(walletAddress);
     try {
-        sessionStorage.removeItem(`files_${walletAddress}`);
+        localStorage.removeItem(`files_${walletAddress}`);
     } catch (e) {
         // Ignore
     }
