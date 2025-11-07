@@ -59,7 +59,7 @@ export async function encryptKeyBackup(
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(keysData);
     const encryptedData = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
+        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
         key,
         dataBuffer
     );
@@ -82,7 +82,7 @@ export async function decryptKeyBackup(
     try {
         // Decrypt the data
         const decryptedBuffer = await crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv },
+            { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
             key,
             encryptedData
         );
