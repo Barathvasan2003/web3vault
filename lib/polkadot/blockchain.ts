@@ -1,6 +1,30 @@
 /**
- * Polkadot Blockchain Integration for Medical Records
- * Handles wallet connection, file registry, and access control
+ * ⛓️ Polkadot Blockchain Integration
+ * 
+ * Why blockchain in this project?
+ * - Cross-device file access: Upload on laptop, access on phone
+ * - Permanent key backup: Never lose encryption keys even if browser cache cleared
+ * - Decentralization: No central server controlling your medical data
+ * - Audit trail: Immutable record of when files were uploaded
+ * - Access control: Track who has permission to access files (future feature)
+ * 
+ * What's stored on blockchain:
+ * - File CID (IPFS address)
+ * - Encryption key (base64 encoded)
+ * - IV (initialization vector)
+ * - File metadata (name, type, size, owner)
+ * - Timestamp
+ * 
+ * Important:
+ * - Blockchain stores METADATA only, not file content
+ * - Encrypted file is on IPFS
+ * - Need BOTH blockchain (for keys) AND IPFS (for file) to decrypt
+ * - Only wallet owner can query their files
+ * 
+ * Storage method:
+ * - system.remark() transactions with JSON metadata
+ * - Low cost, permanent storage
+ * - Query by wallet address to get all user's files
  */
 
 import { ApiPromise, WsProvider } from '@polkadot/api';

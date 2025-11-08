@@ -30,15 +30,6 @@ export default function ViewFilePage() {
         const fileNameParam = urlParams.get('fileName');
         const fileTypeParam = urlParams.get('fileType');
 
-        // NEW: Check if this is a token-based share link
-        if (tokenParam && !cidParam) {
-            // Token-only URL (time-limited access)
-            setToken(tokenParam);
-            setAutoLoading(true);
-            loadFileFromAccessToken(tokenParam);
-            return;
-        }
-
         // Check if we have decentralized IPFS share (token + cid + meta)
         if (tokenParam && cidParam && metaParam) {
             // This is a decentralized share link - all data on IPFS
@@ -124,103 +115,6 @@ export default function ViewFilePage() {
             }
         }
     }, [autoLoading, token, cid, encryptionKey, iv, encryptedData]);
-
-    const loadFileFromAccessToken = async (tokenId: string) => {
-        setLoading(true);
-        setError('');
-        setFileData(null);
-        setDecryptedPreview(null);
-
-        try {
-            console.log('🔍 Loading file from access token:', tokenId);
-
-            // Import token library
-            const tokenLib = await import('@/lib/sharing/access-tokens');
-
-            // Validate token
-            const validation = tokenLib.validateAccessToken(tokenId);
-
-            if (!validation.valid) {
-                setError(validation.reason || 'Access token is invalid or expired');
-                setLoading(false);
-                return;
-            }
-
-            const accessToken = validation.token!;
-
-            console.log('✅ Access token valid:', accessToken.shareType);
-            console.log('   File:', accessToken.fileName);
-            console.log('   Views:', `${accessToken.viewCount}/${accessToken.maxViews || '∞'}`);
-
-            // Increment view count (this will burn one-time tokens)
-            tokenLib.incrementViewCount(tokenId);
-
-            // Download encrypted file from IPFS
-            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
-            console.log('📥 Downloading from IPFS:', accessToken.cid);
-
-            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(
-                accessToken.cid,
-                (progress) => {
-                    console.log(`📥 Downloading... ${progress}%`);
-                }
-            );
-
-            console.log('✅ File downloaded from IPFS');
-
-            // Convert to base64
-            const encryptionLib = await import('@/lib/encryption/medical-encryption');
-            const encryptedBase64 = encryptionLib.arrayBufferToBase64(encryptedArrayBuffer);
-
-            // Create file object
-            const file = {
-                cid: accessToken.cid,
-                fileName: accessToken.fileName,
-                fileType: accessToken.fileType,
-                fileSize: encryptedArrayBuffer.byteLength,
-                encryptionKey: accessToken.encryptionKey,
-                iv: accessToken.iv,
-                uploadDate: new Date(accessToken.createdAt).toISOString(),
-                sharedViaToken: true,
-                shareType: accessToken.shareType
-            };
-
-            setFileData(file);
-
-            // Decrypt and preview
-            await loadPreview(file, encryptedBase64);
-
-            console.log('✅ File loaded via access token');
-
-            // Show access info to user
-            let accessInfo = '';
-            switch (accessToken.shareType) {
-                case 'one-time':
-                    accessInfo = '🔒 This is a one-time access link. It will expire after you close this page.';
-                    break;
-                case '24-hours':
-                    const expiryDate = new Date(accessToken.expiresAt!).toLocaleString();
-                    accessInfo = `⏰ This link expires on ${expiryDate}`;
-                    break;
-                case 'custom':
-                    const validUntil = new Date(accessToken.validUntil!).toLocaleString();
-                    accessInfo = `📅 This link is valid until ${validUntil}`;
-                    break;
-            }
-
-            if (accessInfo) {
-                setTimeout(() => {
-                    alert(`ℹ️ Access Information\n\n${accessInfo}`);
-                }, 1000);
-            }
-
-        } catch (err: any) {
-            setError(err.message || 'Failed to load file from access token');
-            console.error('Token load error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const loadFileFromToken = async () => {
         if (!token) {

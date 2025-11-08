@@ -1,13 +1,30 @@
 /**
- * IPFS Upload & Download using Pinata
- * Decentralized file storage on IPFS network
+ * 🌐 IPFS Upload & Download via Pinata
  * 
- * FLOW:
- * 1. Upload encrypted file to Pinata IPFS
- * 2. Get CID (Content Identifier) - permanent IPFS address
- * 3. Store CID on blockchain with encryption keys
- * 4. Download from any device using CID
- * 5. Decrypt using keys from blockchain
+ * Handles decentralized file storage on IPFS (InterPlanetary File System)
+ * 
+ * Key Concepts:
+ * - CID (Content Identifier): Unique hash-based address for files on IPFS
+ * - Pinning: Keeping files available on IPFS network (via Pinata service)
+ * - Gateways: HTTP access points to IPFS network (Pinata, ipfs.io, Cloudflare)
+ * - Multi-gateway fallback: Tries multiple gateways if one fails
+ * 
+ * Upload Flow:
+ * 1. Receive encrypted file (already encrypted in browser)
+ * 2. Upload to Pinata IPFS API
+ * 3. Get CID (e.g., "QmYNhxtruw4H1YrtSCES...")
+ * 4. Return CID to caller for blockchain storage
+ * 
+ * Download Flow:
+ * 1. Receive CID from blockchain
+ * 2. Try downloading from primary gateway (Pinata)
+ * 3. If fails, try fallback gateways (ipfs.io, Cloudflare)
+ * 4. Return encrypted file to caller for decryption
+ * 
+ * Security:
+ * - IPFS stores ENCRYPTED files only
+ * - Encryption keys NEVER uploaded to IPFS
+ * - Files useless without keys from blockchain
  */
 
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../encryption/medical-encryption';

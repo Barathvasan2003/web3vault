@@ -1,14 +1,27 @@
 /**
- * Medical-Grade Encryption Utilities
- * AES-256-GCM encryption for healthcare data
- * HIPAA-compliant client-side encryption
+ * 🔐 Medical-Grade Encryption Utilities
+ * 
+ * Implements AES-256-GCM encryption for medical records
+ * - 256-bit keys (military-grade security)
+ * - 12-byte random IV per file (prevents pattern attacks)
+ * - Client-side only (server/IPFS never sees unencrypted data)
+ * - HIPAA-compliant encryption standard
+ * 
+ * Flow:
+ * 1. Generate random AES-256 key for each file
+ * 2. Generate random IV (initialization vector)
+ * 3. Encrypt file locally in browser
+ * 4. Export key to base64 for storage on blockchain
+ * 5. Upload encrypted file to IPFS
  */
 
 /**
  * Generate encryption key from wallet signature
- * @param walletAddress - User's wallet address
- * @param signature - Signature from wallet
- * @returns CryptoKey for encryption/decryption
+ * Used for wallet-based file access control
+ * 
+ * @param walletAddress - User's Polkadot wallet address
+ * @param signature - Cryptographic signature from wallet
+ * @returns CryptoKey for encryption/decryption operations
  */
 export async function deriveKeyFromWallet(
     walletAddress: string,

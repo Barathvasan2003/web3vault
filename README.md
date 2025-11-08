@@ -1,485 +1,968 @@
-# 🏥 Web3 Medical Vault - Decentralized Healthcare Records
+# 🏥 Web3Vault - Decentralized Medical Records System# 🏥 Web3 Medical Vault - Decentralized Healthcare Records
 
-> **Your Health Data, Your Control** - Secure, Private, and Permanent Medical Records Storage  
+
+
+> **A privacy-first, blockchain-verified medical vault with IPFS storage and AI-powered prescription analysis**> **Your Health Data, Your Control** - Secure, Private, and Permanent Medical Records Storage  
+
 > Built with Next.js, IPFS, Polkadot Blockchain, and Zero-Knowledge Encryption
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-success)](https://web3vault-production.up.railway.app)
-[![Status](https://img.shields.io/badge/status-production%20ready-success)](https://web3vault-production.up.railway.app)
-[![Blockchain](https://img.shields.io/badge/blockchain-Polkadot-E6007A)](https://polkadot.network/)
-[![Storage](https://img.shields.io/badge/storage-IPFS%20Pinata-blue)](https://pinata.cloud/)
-[![AI](https://img.shields.io/badge/AI-Gemini%20Vision-purple)](https://ai.google.dev/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.1-black)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://web3vault-production.up.railway.app)
 
----
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/Barathvasan2003/web3vault)[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-success)](https://web3vault-production.up.railway.app)
+
+[![Status](https://img.shields.io/badge/status-production%20ready-success)](https://web3vault-production.up.railway.app)
+
+---[![Blockchain](https://img.shields.io/badge/blockchain-Polkadot-E6007A)](https://polkadot.network/)
+
+[![Storage](https://img.shields.io/badge/storage-IPFS%20Pinata-blue)](https://pinata.cloud/)
+
+## 🎯 What is Web3Vault?[![AI](https://img.shields.io/badge/AI-Gemini%20Vision-purple)](https://ai.google.dev/)
+
+[![Next.js](https://img.shields.io/badge/Next.js-14.1-black)](https://nextjs.org/)
+
+Web3Vault is a complete decentralized medical records system that combines:[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+
+- **🔐 Client-Side Encryption** (AES-256-GCM) - Files encrypted in your browser, never sent unencrypted[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+- **🌐 IPFS Storage** (Pinata) - Decentralized permanent storage, no central servers
+
+- **⛓️ Blockchain Backup** (Polkadot) - Keys stored on-chain for cross-device access---
+
+- **🤖 AI Analysis** (Gemini Vision) - Automatic prescription OCR and medical data extraction
 
 ## 🚀 Live Production
 
-**App URL**: [https://web3vault-production.up.railway.app](https://web3vault-production.up.railway.app)
+**Key Innovation**: Upload on laptop → Access on phone. Your medical records sync across all your devices via blockchain, while staying fully encrypted and decentralized.
 
-**Try it now:**
-1. Install [Polkadot.js Extension](https://polkadot.js.org/extension/)
-2. Visit the live app
-3. Connect your wallet
-4. Upload and encrypt your first medical file!
+**App URL**: [https://web3vault-production.up.railway.app](https://web3vault-production.up.railway.app)
 
 ---
 
-## 🎯 What We Built
+**Try it now:**
 
-A **complete decentralized medical vault** where you can:
+## 🚀 Quick Start1. Install [Polkadot.js Extension](https://polkadot.js.org/extension/)
 
-✅ **Own Your Data** - Your files, your keys, your control  
-✅ **Encrypt Everything** - Military-grade AES-256-GCM encryption  
-✅ **Store Permanently** - IPFS distributed storage  
+2. Visit the live app
+
+### Prerequisites3. Connect your wallet
+
+- [Polkadot.js Browser Extension](https://polkadot.js.org/extension/)4. Upload and encrypt your first medical file!
+
+- [Pinata API Key](https://pinata.cloud) (for IPFS uploads)
+
+- [Google Gemini API Key](https://ai.google.dev) (for AI OCR)---
+
+
+
+### Installation## 🎯 What We Built
+
+
+
+1. **Clone the repository**A **complete decentralized medical vault** where you can:
+
+```bash
+
+git clone https://github.com/Barathvasan2003/web3vault.git✅ **Own Your Data** - Your files, your keys, your control  
+
+cd web3vault/webvault3✅ **Encrypt Everything** - Military-grade AES-256-GCM encryption  
+
+```✅ **Store Permanently** - IPFS distributed storage  
+
 ✅ **Access Anywhere** - Blockchain-based cross-device sync  
-✅ **Share Easily** - One-click secure share links  
-✅ **AI-Powered** - Automatic prescription data extraction
+
+2. **Install dependencies**✅ **Share Easily** - One-click secure share links  
+
+```bash✅ **AI-Powered** - Automatic prescription data extraction
+
+npm install
+
+```
 
 
 
-## 📋 Table of Contents## ✨ Core Features
+3. **Configure environment variables**## 📋 Table of Contents## ✨ Core Features
 
 
 
-- [Overview](#-overview)### 1️⃣ **Decentralized Identity & Login**
+Create `.env.local` with:
+
+```env
+
+# Pinata IPFS Configuration- [Overview](#-overview)### 1️⃣ **Decentralized Identity & Login**
+
+NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
 
 - [Problem Statement](#-problem-statement)- 🔑 Login with Polkadot wallet (no email/password)
 
-- [Our Solution](#-our-solution)- 🆔 Decentralized Identity (DID)
+# Google Gemini AI Configuration
 
-- [Key Features](#-key-features)- 🔄 Multi-device secure access
+NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key- [Our Solution](#-our-solution)- 🆔 Decentralized Identity (DID)
 
-- [Technology Stack](#-technology-stack)- ✅ **You own your identity**
 
-- [Polkadot Integration](#-polkadot-integration)
 
-- [Security](#-security)### 2️⃣ **Intelligent Medical Records**
+# Polkadot Configuration (optional - defaults to wss://rpc.polkadot.io)- [Key Features](#-key-features)- 🔄 Multi-device secure access
 
-- [Getting Started](#-getting-started)- 📄 Upload prescriptions, reports, medical PDFs
+NEXT_PUBLIC_POLKADOT_RPC=wss://rpc.polkadot.io
 
-- [Usage Guide](#-usage-guide)- 🤖 **AI OCR** - Extract text from images
+```- [Technology Stack](#-technology-stack)- ✅ **You own your identity**
+
+
+
+**How to get API keys:**- [Polkadot Integration](#-polkadot-integration)
+
+- **Pinata JWT**: Sign up at [pinata.cloud](https://pinata.cloud) → API Keys → Create New Key → Copy JWT
+
+- **Gemini API**: Visit [ai.google.dev](https://ai.google.dev) → Get API Key → Create in new project- [Security](#-security)### 2️⃣ **Intelligent Medical Records**
+
+
+
+4. **Run development server**- [Getting Started](#-getting-started)- 📄 Upload prescriptions, reports, medical PDFs
+
+```bash
+
+npm run dev- [Usage Guide](#-usage-guide)- 🤖 **AI OCR** - Extract text from images
+
+```
 
 - [Demo Video](#-demo-video)- 🧠 **Medical NLP** - Understand prescriptions & medications
 
+Open [http://localhost:3000](http://localhost:3000)
+
 - [Hackathon Submission](#-hackathon-submission)- 📁 Auto-categorize by type/date/doctor
 
-- [Future Roadmap](#-future-roadmap)- 💊 Extract medication, dosage, diagnosis
+5. **Connect Polkadot wallet**
 
-- [License](#-license)
+- Install [Polkadot.js Extension](https://polkadot.js.org/extension/)- [Future Roadmap](#-future-roadmap)- 💊 Extract medication, dosage, diagnosis
 
-### 3️⃣ **Decentralized Secure Storage**
+- Create or import wallet
 
----- 🔒 **Client-side AES-256 encryption**
+- Connect to Web3Vault- [License](#-license)
 
-- 🌐 Store on **IPFS + Crust Network**
 
-## 🎯 Overview- ⛓️ File hash + proof on **Polkadot blockchain**
 
-- 🔐 HIPAA-level security without servers
+---### 3️⃣ **Decentralized Secure Storage**
 
-**Web3Vault** is a decentralized medical records management system built on the Polkadot ecosystem. It empowers patients to take full ownership of their healthcare data through blockchain-based identity management, military-grade encryption, and decentralized storage.
+
+
+## 📋 Features---- 🔒 **Client-side AES-256 encryption**
+
+
+
+### ✅ Core Functionality- 🌐 Store on **IPFS + Crust Network**
+
+- **🔒 Client-Side Encryption**: AES-256-GCM encryption in browser (files never leave unencrypted)
+
+- **📤 IPFS Upload**: Permanent decentralized storage via Pinata## 🎯 Overview- ⛓️ File hash + proof on **Polkadot blockchain**
+
+- **⛓️ Blockchain Metadata**: File metadata stored on Polkadot for cross-device sync
+
+- **📥 Multi-Device Access**: Upload on one device, access from any device with same wallet- 🔐 HIPAA-level security without servers
+
+- **🔗 Secure Sharing**: Generate permanent share links with encryption keys
+
+- **🗑️ Permanent Deletion**: Delete from localStorage + IPFS + blockchain**Web3Vault** is a decentralized medical records management system built on the Polkadot ecosystem. It empowers patients to take full ownership of their healthcare data through blockchain-based identity management, military-grade encryption, and decentralized storage.
+
+- **🤖 AI OCR**: Gemini Vision API extracts medicine names, dosage, doctor info from prescriptions
 
 ### 4️⃣ **Smart Access Control**
 
-### Why Web3Vault?- 🔗 Share with doctors via secure token
+### 🎨 User Interface
 
-- ⏰ Set expiry time or one-view access
+- **📊 Dashboard**: File count, total size, storage statistics### Why Web3Vault?- 🔗 Share with doctors via secure token
 
-- **👤 Patient-Centric**: Patients own and control their medical data- ❌ Revoke access instantly
+- **📁 File List**: Upload, download, share, delete, view AI data
 
-- **🔐 Privacy-First**: End-to-end encryption with AES-256-GCM- 📊 **On-chain access logs** (who, when, what)
+- **🖼️ Image Preview**: View medical documents before download- ⏰ Set expiry time or one-view access
 
-- **🌐 Decentralized**: IPFS storage + Polkadot blockchain
+- **💉 AI Data Display**: Extracted prescription information with edit capability
 
-- **🤖 AI-Powered**: Automatic extraction of prescription data### 5️⃣ **Emergency Medical Card**
-
-- **🆘 Emergency Access**: Controlled sharing for emergency situations- 🆘 QR code on dashboard
-
-- **🔗 Interoperable**: Works across healthcare providers- 🩸 Blood type, allergies, emergency contact
-
-- ⚡ **Life-saving in emergencies**
-
----- 📱 Scannable by any phone
+- **🔐 Blockchain Info**: Active blockchain backup indicator- **👤 Patient-Centric**: Patients own and control their medical data- ❌ Revoke access instantly
 
 
 
-## 💡 Problem Statement### 6️⃣ **AI Health Assistant**
+---- **🔐 Privacy-First**: End-to-end encryption with AES-256-GCM- 📊 **On-chain access logs** (who, when, what)
 
-- 💬 Understand prescription text
 
-### Current Healthcare Data Challenges:- 💊 Extract medications & dosage
 
-- 📋 Generate health summary
+## 🏗️ Architecture- **🌐 Decentralized**: IPFS storage + Polkadot blockchain
 
-1. **🏥 Centralized Control**: Patients don't own their medical records- 🔍 Smart search across records
 
-2. **🔓 Privacy Risks**: Centralized databases vulnerable to breaches
 
-3. **🚫 Limited Access**: Difficult to share records across providers---
+### How It Works- **🤖 AI-Powered**: Automatic extraction of prescription data### 5️⃣ **Emergency Medical Card**
 
-4. **📄 Paper-Based**: Many regions still rely on physical prescriptions
 
-5. **💰 Vendor Lock-in**: Healthcare systems don't interoperate## 🛠️ Technology Stack
 
-6. **⏰ Emergency Delays**: Critical data unavailable when needed
+```- **🆘 Emergency Access**: Controlled sharing for emergency situations- 🆘 QR code on dashboard
 
-### 🎨 Frontend
+┌─────────────────────────────────────────────────────────────────┐
 
-### Real-World Impact:| Category | Technology |
+│                    YOUR BROWSER (Client-Side)                   │- **🔗 Interoperable**: Works across healthcare providers- 🩸 Blood type, allergies, emergency contact
 
-|----------|-----------|
+│                                                                 │
 
-- **150 million+** patient records breached globally (2024)| Framework | **Next.js 14** (App Router) |
+│  1. Select file (prescription.png)                              │- ⚡ **Life-saving in emergencies**
 
-- **Average cost** of healthcare data breach: $10.93M| UI | **TailwindCSS** + **ShadCN** |
+│  2. Generate random AES-256 key + IV                            │
+
+│  3. Encrypt file locally ────────────────────────────────┐     │---- 📱 Scannable by any phone
+
+│  4. Upload encrypted file to IPFS                        │     │
+
+│  5. Store key on blockchain                              │     │
+
+│                                                          │     │
+
+│  🔑 Key never leaves your control!                       │     │## 💡 Problem Statement### 6️⃣ **AI Health Assistant**
+
+└──────────────────────────────────────────────────────────┼─────┘
+
+                          │                                │- 💬 Understand prescription text
+
+                          ↓                                │
+
+        ┌─────────────────────────────┐                    │### Current Healthcare Data Challenges:- 💊 Extract medications & dosage
+
+        │    IPFS (Pinata Gateway)    │                    │
+
+        │                             │                    │- 📋 Generate health summary
+
+        │  ✅ Encrypted file          │                    │
+
+        │  ❌ NO encryption key       │                    │1. **🏥 Centralized Control**: Patients don't own their medical records- 🔍 Smart search across records
+
+        │  📦 CID: QmXxx...           │                    │
+
+        │                             │                    │2. **🔓 Privacy Risks**: Centralized databases vulnerable to breaches
+
+        │  File is useless without    │                    │
+
+        │  the key from blockchain!   │                    │3. **🚫 Limited Access**: Difficult to share records across providers---
+
+        └─────────────────────────────┘                    │
+
+                          │                                │4. **📄 Paper-Based**: Many regions still rely on physical prescriptions
+
+                          └────────────┬───────────────────┘
+
+                                       ↓5. **💰 Vendor Lock-in**: Healthcare systems don't interoperate## 🛠️ Technology Stack
+
+                          ┌──────────────────────────┐
+
+                          │  Polkadot Blockchain     │6. **⏰ Emergency Delays**: Critical data unavailable when needed
+
+                          │                          │
+
+                          │  ✅ CID (IPFS address)   │### 🎨 Frontend
+
+                          │  ✅ Encryption key       │
+
+                          │  ✅ IV (init vector)     │### Real-World Impact:| Category | Technology |
+
+                          │  ✅ File metadata        │
+
+                          │  ✅ Owner wallet address │|----------|-----------|
+
+                          │                          │
+
+                          │  Enables cross-device    │- **150 million+** patient records breached globally (2024)| Framework | **Next.js 14** (App Router) |
+
+                          │  access & key backup     │
+
+                          └──────────────────────────┘- **Average cost** of healthcare data breach: $10.93M| UI | **TailwindCSS** + **ShadCN** |
+
+```
 
 - **Patients spend 8+ hours** annually managing medical records| State | **Zustand** |
 
+### Why Blockchain?
+
 - **Emergency room delays** due to missing medical history| Wallet | **Polkadot.js** + Talisman |
 
-| Upload | **React Dropzone** |
+**Problem without blockchain:**
 
----| QR Code | **qrcode.react** |
+- ❌ localStorage only works on one device| Upload | **React Dropzone** |
+
+- ❌ Clear browser cache → lose all files
+
+- ❌ Can't access from phone/tablet---| QR Code | **qrcode.react** |
+
+- ❌ Lose encryption keys → files locked forever
 
 
 
-## ✨ Our Solution### 🧠 AI Layer
+**Solution with Polkadot blockchain:**
 
-| Feature | Technology |
+- ✅ Upload on desktop → access on mobile## ✨ Our Solution### 🧠 AI Layer
 
-Web3Vault leverages **Polkadot's decentralized infrastructure** to create a patient-controlled medical records system:|---------|-----------|
+- ✅ Keys permanently backed up on-chain
 
-| OCR | **Tesseract.js** (client-side) + Google Vision |
+- ✅ Query blockchain → sync files across devices| Feature | Technology |
 
-### Core Principles:| Medical AI | **GPT-4o-mini** API |
+- ✅ Immutable audit trail for compliance
 
-| Prescription Parsing | Medical NLP + LLM |
+- ✅ True decentralization (no central server)Web3Vault leverages **Polkadot's decentralized infrastructure** to create a patient-controlled medical records system:|---------|-----------|
 
-1. **🔑 Self-Sovereign Identity**| Text Understanding | OpenAI Embeddings |
 
-   - Polkadot wallet = your medical identity
 
-   - No centralized authentication### 🔗 Blockchain (Polkadot Ecosystem)
+### Security Model| OCR | **Tesseract.js** (client-side) + Google Vision |
 
-   - You control access permissions| Component | Technology |
 
-|-----------|-----------|
 
-2. **🔐 Zero-Knowledge Privacy**| Identity | **Polkadot DID** + Wallet |
+1. **Encryption Keys**: Generated client-side, never sent to any server### Core Principles:| Medical AI | **GPT-4o-mini** API |
+
+2. **File Storage**: IPFS stores encrypted files, useless without keys
+
+3. **Key Storage**: Blockchain stores keys, but you need wallet to access| Prescription Parsing | Medical NLP + LLM |
+
+4. **Share Links**: Keys in URL (permanent sharing, send via secure channel)
+
+5. **Access Control**: Wallet signature required for file operations1. **🔑 Self-Sovereign Identity**| Text Understanding | OpenAI Embeddings |
+
+
+
+**Note**: Share links contain encryption keys in URL. Share only with trusted recipients via secure channels (encrypted messaging, etc.)   - Polkadot wallet = your medical identity
+
+
+
+---   - No centralized authentication### 🔗 Blockchain (Polkadot Ecosystem)
+
+
+
+## 💻 Tech Stack   - You control access permissions| Component | Technology |
+
+
+
+### Frontend|-----------|-----------|
+
+- **Next.js 14** - React framework with App Router
+
+- **TypeScript** - Type safety2. **🔐 Zero-Knowledge Privacy**| Identity | **Polkadot DID** + Wallet |
+
+- **Tailwind CSS** - Styling
 
    - Files encrypted before upload| Smart Contracts | **ink!** contracts |
 
-   - Only you have decryption keys| Access Control | Substrate runtime |
+### Encryption
 
-   - Healthcare providers never see unencrypted data| Event Logging | Substrate events |
+- **Web Crypto API** - Browser-native AES-256-GCM encryption   - Only you have decryption keys| Access Control | Substrate runtime |
 
-| Storage Proofs | On-chain file hashes |
+- **256-bit keys** - Military-grade security
 
-3. **🌍 Decentralized Storage**
+- **12-byte IV** - Unique per file   - Healthcare providers never see unencrypted data| Event Logging | Substrate events |
+
+
+
+### Storage| Storage Proofs | On-chain file hashes |
+
+- **IPFS (Pinata)** - Decentralized file storage
+
+- **Multi-gateway fallback** - Pinata → ipfs.io → Cloudflare IPFS3. **🌍 Decentralized Storage**
+
+- **Content addressing** - Files referenced by CID (hash)
 
    - IPFS for file storage### 🗄️ Decentralized Storage
 
-   - Polkadot blockchain for metadata| Purpose | Technology |
+### Blockchain
 
-   - No single point of failure|---------|-----------|
+- **Polkadot** - Layer-1 blockchain for metadata   - Polkadot blockchain for metadata| Purpose | Technology |
 
-| Primary | **IPFS + Crust Network** |
+- **system.remark()** - Store JSON metadata in transactions
 
-4. **🤝 Controlled Sharing**| Backup | Web3.Storage |
-
-   - Time-based access control| Metadata | Lightweight Node.js API |
-
-   - One-time, temporary, or permanent links
-
-   - Revocable permissions### 🔐 Security
-
-| Feature | Technology |
-
----|---------|-----------|
-
-| Encryption | **AES-256-GCM** + RSA |
-
-## 🚀 Key Features| Key Management | Client-side (Web Crypto API) |
-
-| Identity | JWT + DID |
-
-### 1. **Polkadot Wallet Integration** 🔗| Zero-Knowledge | zk-SNARK concepts |
-
-- Connect with any Polkadot-compatible wallet
-
-- Wallet-based identity management### 📦 Backend (Minimal)
-
-- Transaction signing for blockchain operations| Use Case | Technology |
-
-- Future: Wallet-derived encryption keys|----------|-----------|
-
-| AI Gateway | **FastAPI** / Node.js |
-
-### 2. **Military-Grade Encryption** 🔐| Metadata | **Supabase** (free tier) |
-
-- **AES-256-GCM** encryption (HIPAA/FIPS compliant)| Cache | Redis / Upstash |
-
-- Client-side encryption (data never exposed)| Push Notifications | Firebase Cloud Messaging |
-
-- Unique keys per file
-
-- Authenticated encryption (tamper-proof)---
+- **Polkadot.js** - Wallet integration   - No single point of failure|---------|-----------|
 
 
 
-### 3. **AI-Powered Data Extraction** 🤖## 📁 Project Structure
+### AI| Primary | **IPFS + Crust Network** |
 
-- **Gemini AI integration** for prescription analysis
+- **Google Gemini Vision API** - Prescription OCR
 
-- Automatic extraction of:```
+- **Medical NLP** - Extract structured data from images4. **🤝 Controlled Sharing**| Backup | Web3.Storage |
 
-  - Doctor informationWebVault3/
 
-  - Patient details├── app/                        # Next.js 14 App Router
 
-  - Diagnosis│   ├── (auth)/                # Authentication pages
+### Deployment   - Time-based access control| Metadata | Lightweight Node.js API |
 
-  - Medications (name, dosage, frequency)│   ├── dashboard/             # Main dashboard
+- **GitHub** - Source control
 
-  - Prescription dates│   ├── records/               # Medical records
+- **Railway** - Hosting with auto-deploy   - One-time, temporary, or permanent links
 
-- Editable AI results (manual corrections)│   ├── share/                 # Access sharing
 
-│   └── emergency/             # Emergency card
 
-### 4. **Decentralized Storage** 🌐├── components/                 # React components
+---   - Revocable permissions### 🔐 Security
 
-- **IPFS** for permanent file storage│   ├── ui/                    # ShadCN components
 
-- Content-addressed (CID-based)│   ├── medical/               # Medical-specific
+
+## 📁 Project Structure| Feature | Technology |
+
+
+
+```---|---------|-----------|
+
+webvault3/
+
+├── app/| Encryption | **AES-256-GCM** + RSA |
+
+│   ├── page.tsx              # Home/Dashboard page
+
+│   ├── view/page.tsx         # View shared files page## 🚀 Key Features| Key Management | Client-side (Web Crypto API) |
+
+│   └── api/files/[cid]/      # IPFS file proxy API
+
+│| Identity | JWT + DID |
+
+├── components/
+
+│   ├── dashboard/### 1. **Polkadot Wallet Integration** 🔗| Zero-Knowledge | zk-SNARK concepts |
+
+│   │   ├── Dashboard.tsx     # Main dashboard with stats
+
+│   │   ├── FileUpload.tsx    # File upload with AI OCR- Connect with any Polkadot-compatible wallet
+
+│   │   ├── FileList.tsx      # File list with actions
+
+│   │   └── EmergencyCard.tsx # Emergency access info- Wallet-based identity management### 📦 Backend (Minimal)
+
+│   └── wallet/
+
+│       └── WalletConnect.tsx # Polkadot wallet connection- Transaction signing for blockchain operations| Use Case | Technology |
+
+│
+
+├── lib/- Future: Wallet-derived encryption keys|----------|-----------|
+
+│   ├── encryption/
+
+│   │   ├── medical-encryption.ts  # AES-256-GCM encryption/decryption| AI Gateway | **FastAPI** / Node.js |
+
+│   │   └── key-backup.ts          # Key import/export utilities
+
+│   │### 2. **Military-Grade Encryption** 🔐| Metadata | **Supabase** (free tier) |
+
+│   ├── ipfs/
+
+│   │   ├── ipfs-client.ts         # Pinata API client- **AES-256-GCM** encryption (HIPAA/FIPS compliant)| Cache | Redis / Upstash |
+
+│   │   ├── ipfs-upload-download.ts # Upload/download with multi-gateway
+
+│   │   └── ipfs-client-mock.ts    # Mock client for testing- Client-side encryption (data never exposed)| Push Notifications | Firebase Cloud Messaging |
+
+│   │
+
+│   ├── polkadot/- Unique keys per file
+
+│   │   └── blockchain.ts          # Blockchain metadata storage
+
+│   │- Authenticated encryption (tamper-proof)---
+
+│   ├── sharing/
+
+│   │   ├── simple-share.ts        # Generate share links
+
+│   │   └── secure-share.ts        # Legacy secure sharing
+
+│   │### 3. **AI-Powered Data Extraction** 🤖## 📁 Project Structure
+
+│   ├── ai/
+
+│   │   ├── gemini-ocr.ts          # Gemini Vision API integration- **Gemini AI integration** for prescription analysis
+
+│   │   ├── medical-nlp.ts         # Medical data extraction
+
+│   │   └── ocr-service.ts         # OCR service wrapper- Automatic extraction of:```
+
+│   │
+
+│   ├── storage/  - Doctor informationWebVault3/
+
+│   │   └── file-registry.ts       # localStorage file registry
+
+│   │  - Patient details├── app/                        # Next.js 14 App Router
+
+│   └── access/
+
+│       └── access-control.ts      # ACL management  - Diagnosis│   ├── (auth)/                # Authentication pages
+
+│
+
+├── package.json              # Dependencies  - Medications (name, dosage, frequency)│   ├── dashboard/             # Main dashboard
+
+├── next.config.js            # Next.js configuration
+
+├── tailwind.config.js        # Tailwind CSS config  - Prescription dates│   ├── records/               # Medical records
+
+└── tsconfig.json             # TypeScript config
+
+```- Editable AI results (manual corrections)│   ├── share/                 # Access sharing
+
+
+
+---│   └── emergency/             # Emergency card
+
+
+
+## 🔧 Key Functions### 4. **Decentralized Storage** 🌐├── components/                 # React components
+
+
+
+### Encryption (`lib/encryption/medical-encryption.ts`)- **IPFS** for permanent file storage│   ├── ui/                    # ShadCN components
+
+```typescript
+
+// Generate unique AES-256 key for each file- Content-addressed (CID-based)│   ├── medical/               # Medical-specific
+
+generateEncryptionKey(): Promise<CryptoKey>
 
 - Distributed across nodes│   ├── wallet/                # Wallet integration
 
-- Future: Crust Network integration│   └── ai/                    # AI features
+// Encrypt file with AES-256-GCM
 
-├── contracts/                  # ink! Smart Contracts
+encryptMedicalFile(file: File, key: CryptoKey, iv: Uint8Array): Promise<ArrayBuffer>- Future: Crust Network integration│   └── ai/                    # AI features
+
+
+
+// Decrypt file├── contracts/                  # ink! Smart Contracts
+
+decryptMedicalFile(encryptedData: ArrayBuffer, key: CryptoKey, iv: Uint8Array): Promise<ArrayBuffer>
 
 ### 5. **Flexible Sharing** 🔗│   ├── access-control/        # Permission management
 
-- **One-Time Access**: Self-destruct after viewing│   ├── file-registry/         # File metadata
+// Export key to base64 for storage
 
-- **24-Hour Access**: Temporary emergency sharing│   └── audit-log/             # Access logging
+exportKey(key: CryptoKey): Promise<string>- **One-Time Access**: Self-destruct after viewing│   ├── file-registry/         # File metadata
 
-- **Custom Date Range**: Specific time windows├── ai-engine/                  # AI & OCR Services
 
-- **Permanent Links**: Long-term access control│   ├── ocr/                   # Tesseract + Vision API
 
-│   ├── medical-nlp/           # Prescription parsing
+// Import key from base64- **24-Hour Access**: Temporary emergency sharing│   └── audit-log/             # Access logging
+
+importKey(base64Key: string): Promise<CryptoKey>
+
+```- **Custom Date Range**: Specific time windows├── ai-engine/                  # AI & OCR Services
+
+
+
+### IPFS (`lib/ipfs/ipfs-upload-download.ts`)- **Permanent Links**: Long-term access control│   ├── ocr/                   # Tesseract + Vision API
+
+```typescript
+
+// Upload encrypted file to IPFS via Pinata│   ├── medical-nlp/           # Prescription parsing
+
+uploadToIPFS(file: Blob, fileName: string, fileType: string): Promise<string>
 
 ### 6. **Emergency Access** 🆘│   └── embeddings/            # Vector search
 
-- Dedicated emergency card feature├── lib/                        # Utilities
+// Download file with multi-gateway fallback
 
-- Quick sharing with first responders│   ├── encryption/            # AES-256 encryption
+downloadFromIPFS(cid: string, onProgress?: (progress: number) => void): Promise<ArrayBuffer>- Dedicated emergency card feature├── lib/                        # Utilities
+
+
+
+// Get file metadata from Pinata- Quick sharing with first responders│   ├── encryption/            # AES-256 encryption
+
+getFileMetadataFromPinata(cid: string): Promise<{ fileName: string; fileType: string }>
 
 - Pre-authorized trusted contacts│   ├── ipfs/                  # IPFS + Crust
 
-- Critical medical information always accessible│   ├── polkadot/              # Blockchain utils
+// Permanently delete from IPFS
+
+unpinFile(cid: string): Promise<void>- Critical medical information always accessible│   ├── polkadot/              # Blockchain utils
+
+```
 
 │   └── ai/                    # AI integrations
 
-### 7. **Record Management** 📂├── storage/                    # IPFS scripts
+### Blockchain (`lib/polkadot/blockchain.ts`)
 
-- Upload prescriptions, lab reports, X-rays├── docs/                       # Documentation
+```typescript### 7. **Record Management** 📂├── storage/                    # IPFS scripts
 
-- Download and decrypt anytime│   ├── architecture.md        # System design
+// Connect to Polkadot and get wallet accounts
 
-- Delete records (remove from your vault)│   ├── deployment.md          # Deploy guide
+getWalletAccounts(): Promise<InjectedAccountWithMeta[]>- Upload prescriptions, lab reports, X-rays├── docs/                       # Documentation
 
-- View full medical history timeline│   └── demo-script.md         # Video demo
 
-└── public/                     # Static assets
+
+// Register file metadata on-chain- Download and decrypt anytime│   ├── architecture.md        # System design
+
+registerFileOnChain(
+
+  account: InjectedAccountWithMeta,- Delete records (remove from your vault)│   ├── deployment.md          # Deploy guide
+
+  cid: string,
+
+  fileName: string,- View full medical history timeline│   └── demo-script.md         # Video demo
+
+  encryptionKey: string,
+
+  iv: number[]└── public/                     # Static assets
+
+): Promise<string>
 
 ---```
 
+// Query blockchain for user's files
 
+getFilesFromBlockchain(walletAddress: string): Promise<FileMetadata[]>
+
+```
 
 ## 🛠 Technology Stack---
 
+### AI OCR (`lib/ai/gemini-ocr.ts`)
 
+```typescript
 
-### Frontend:## 🚀 Quick Start
+// Extract prescription data from image
 
-- **Next.js 14** - React framework
-
-- **TypeScript** - Type safety### Prerequisites
-
-- **TailwindCSS** - Styling
-
-- **React Hooks** - State management```powershell
-
-# 1. Install Node.js (v18+)
-
-### Blockchain:node --version
-
-- **Polkadot.js** - Wallet connectivity
-
-- **Polkadot API** - Blockchain interactions# 2. Install Polkadot.js Wallet
-
-- **Substrate** - Future custom pallets# https://polkadot.js.org/extension/
+extractPrescriptionData(imageData: string): Promise<PrescriptionData>### Frontend:## 🚀 Quick Start
 
 
 
-### Storage:# 3. Get OpenAI API key (for AI features)
+// Response includes:- **Next.js 14** - React framework
 
-- **IPFS** - Decentralized file storage# https://platform.openai.com/api-keys
+// - medicines: { name, dosage, frequency, duration }[]
+
+// - patientInfo: { name, age, gender }- **TypeScript** - Type safety### Prerequisites
+
+// - doctorInfo: { name, specialization, hospital }
+
+// - diagnosis: string- **TailwindCSS** - Styling
+
+// - instructions: string
+
+```- **React Hooks** - State management```powershell
+
+
+
+---# 1. Install Node.js (v18+)
+
+
+
+## 🎬 Demo Flow### Blockchain:node --version
+
+
+
+### 1. Upload Medical File- **Polkadot.js** - Wallet connectivity
+
+1. Click **"📤 Upload Medical File"**
+
+2. Select prescription/medical report- **Polkadot API** - Blockchain interactions# 2. Install Polkadot.js Wallet
+
+3. Wait for AI analysis (automatic OCR)
+
+4. File encrypts → uploads to IPFS → stores key on blockchain- **Substrate** - Future custom pallets# https://polkadot.js.org/extension/
+
+5. ✅ File appears in dashboard
+
+
+
+### 2. Access from Another Device
+
+1. Open Web3Vault on phone/tablet### Storage:# 3. Get OpenAI API key (for AI features)
+
+2. Connect **same Polkadot wallet**
+
+3. Files automatically sync from blockchain- **IPFS** - Decentralized file storage# https://platform.openai.com/api-keys
+
+4. Download and decrypt any file
 
 - **IPFS HTTP Client** - File upload/download```
 
-- **LocalStorage** - Demo metadata (production: blockchain)
+### 3. Share with Doctor
 
-### Installation
+1. Click **"Share"** on a file- **LocalStorage** - Demo metadata (production: blockchain)
 
-### Encryption:
+2. Click **"Generate Share Link"**
+
+3. Copy link### Installation
+
+4. Send to doctor via secure channel
+
+5. Doctor opens link (no wallet needed)### Encryption:
+
+6. File automatically downloads and decrypts
 
 - **WebCrypto API** - Browser-native encryption```powershell
 
-- **AES-256-GCM** - Symmetric encryption# Navigate to project
+### 4. View AI-Extracted Data
 
-- **PBKDF2** - Key derivation (future)cd C:\Users\barat\OneDrive\Desktop\Web3vault\webvault3
+1. Click **"🤖 AI Data"** on prescription- **AES-256-GCM** - Symmetric encryption# Navigate to project
+
+2. View extracted medicines, dosage, doctor info
+
+3. Edit if needed- **PBKDF2** - Key derivation (future)cd C:\Users\barat\OneDrive\Desktop\Web3vault\webvault3
+
+4. Data stored locally for quick reference
 
 
 
-### AI/ML:# Install dependencies
+### 5. Delete File
 
-- **Google Gemini AI** - Vision API for OCRnpm install
+1. Click **"Delete"** on file### AI/ML:# Install dependencies
 
-- **Natural Language Processing** - Medical entity extraction
+2. Confirm deletion
 
-# Setup environment
+3. File removed from:- **Google Gemini AI** - Vision API for OCRnpm install
 
----cp .env.example .env.local
+   - localStorage
 
-# Edit .env.local with your API keys
+   - IPFS (unpinned)- **Natural Language Processing** - Medical entity extraction
 
-## 🔗 Polkadot Integration
+   - Blockchain metadata
 
-# Run development server
+   - Access control list# Setup environment
 
-### Current Implementation:npm run dev
+
+
+------cp .env.example .env.local
+
+
+
+## 🔒 Privacy & Security# Edit .env.local with your API keys
+
+
+
+### What We Protect## 🔗 Polkadot Integration
+
+✅ **Files encrypted client-side** - Server/IPFS never sees unencrypted data  
+
+✅ **Keys stored on blockchain** - Permanent backup, but requires wallet to access  # Run development server
+
+✅ **No central database** - No single point of failure  
+
+✅ **Wallet-based auth** - Only you can access your files  ### Current Implementation:npm run dev
+
+✅ **AES-256-GCM** - Military-grade encryption standard  
 
 ```
 
-#### 1. **Wallet Connection**
+### What to Know
 
-```typescriptVisit: **http://localhost:3000**
+⚠️ **Share links contain keys** - Anyone with link can decrypt file  #### 1. **Wallet Connection**
+
+⚠️ **Blockchain is public** - Metadata (filenames, CIDs) visible on-chain  
+
+⚠️ **No password recovery** - Lose wallet = lose access (backup your wallet!)  ```typescriptVisit: **http://localhost:3000**
+
+⚠️ **IPFS is permanent** - Deleted files may still exist on IPFS network  
 
 // Polkadot.js extension integration
 
-const { web3Accounts, web3Enable } = require('@polkadot/extension-dapp');### Running Blockchain (WSL)
+### Best Practices
+
+1. **Backup your wallet** - Store seed phrase securelyconst { web3Accounts, web3Enable } = require('@polkadot/extension-dapp');### Running Blockchain (WSL)
+
+2. **Share links carefully** - Use encrypted messaging to share
+
+3. **Use strong passwords** - For Polkadot wallet
+
+4. **Verify recipients** - Before sharing medical data
+
+5. **Regular audits** - Review shared access periodically// Connect to wallet```bash
 
 
 
-// Connect to wallet```bash
+---await web3Enable('Web3Vault');# In WSL Ubuntu
 
-await web3Enable('Web3Vault');# In WSL Ubuntu
 
-const accounts = await web3Accounts();cd /mnt/c/Users/barat/OneDrive/Desktop/Web3vault/web3vault-chain
 
-```./target/release/node-template --dev
+## 🐛 Troubleshootingconst accounts = await web3Accounts();cd /mnt/c/Users/barat/OneDrive/Desktop/Web3vault/web3vault-chain
 
-```
+
+
+### "Please install Polkadot.js extension"```./target/release/node-template --dev
+
+- Install from [polkadot.js.org/extension](https://polkadot.js.org/extension/)
+
+- Refresh page after installation```
+
+- Create or import wallet
 
 #### 2. **Identity Management**
 
-- User's Polkadot address = unique patient ID---
+### "Failed to upload to IPFS"
 
-- Wallet signature for authentication
+- Check Pinata API key in `.env.local`- User's Polkadot address = unique patient ID---
 
-- Transaction signing for blockchain operations## 🎯 Core User Flows
+- Verify API key has pinning permissions
+
+- Check file size (Pinata free tier: 1GB limit)- Wallet signature for authentication
 
 
+
+### "Files not syncing across devices"- Transaction signing for blockchain operations## 🎯 Core User Flows
+
+- Ensure same wallet connected on both devices
+
+- Wait 30-60 seconds for blockchain confirmation
+
+- Check blockchain connection in browser console
 
 #### 3. **Future Blockchain Integration**### 1. Patient Journey
 
-- **Smart Contracts**: Access control logic1. Connect Polkadot wallet → Create DID
+### "AI OCR not working"
 
-- **On-Chain Metadata**: File references, permissions2. Upload prescription/report
+- Verify Gemini API key in `.env.local`- **Smart Contracts**: Access control logic1. Connect Polkadot wallet → Create DID
 
-- **Timestamping**: Immutable record creation proof3. AI extracts: medication, dosage, doctor
+- Check API quota (free tier: 60 requests/minute)
 
-- **Cross-Chain**: Bridge to other parachains4. File encrypted & stored on IPFS
+- Ensure image is clear and readable- **On-Chain Metadata**: File references, permissions2. Upload prescription/report
+
+
+
+### "Download failed"- **Timestamping**: Immutable record creation proof3. AI extracts: medication, dosage, doctor
+
+- Try again (IPFS gateway might be slow)
+
+- System auto-retries with fallback gateways- **Cross-Chain**: Bridge to other parachains4. File encrypted & stored on IPFS
+
+- Check browser console for detailed errors
 
 5. Hash recorded on blockchain
 
+---
+
 ### Polkadot Features Utilized:6. Access via dashboard
 
+## 🚢 Deployment
 
+
+
+### Deploy to Railway
 
 ✅ **Polkadot.js Extension** - Wallet connectivity  ### 2. Sharing with Doctor
 
-✅ **Web3 Accounts** - Identity management  1. Select medical record
+1. Fork this repository
 
-🔄 **Substrate RPC** - Blockchain queries (in development)  2. Generate secure access token
+2. Sign up at [railway.app](https://railway.app)✅ **Web3 Accounts** - Identity management  1. Select medical record
 
-🔄 **Ink! Smart Contracts** - Access control (planned)  3. Set expiry (24 hours / one-view)
+3. Create new project from GitHub repo
+
+4. Add environment variables:🔄 **Substrate RPC** - Blockchain queries (in development)  2. Generate secure access token
+
+   - `NEXT_PUBLIC_PINATA_JWT`
+
+   - `NEXT_PUBLIC_GEMINI_API_KEY`🔄 **Ink! Smart Contracts** - Access control (planned)  3. Set expiry (24 hours / one-view)
+
+5. Deploy automatically on push to main branch
 
 🔄 **XCM** - Cross-chain medical data (roadmap)4. Share link with doctor
 
+### Deploy to Vercel
+
 5. Doctor views (logged on-chain)
 
-### Why Polkadot?6. Revoke access anytime
+```bash
+
+vercel --prod### Why Polkadot?6. Revoke access anytime
+
+```
 
 
+
+Add environment variables in Vercel dashboard.
 
 1. **🔗 Interoperability**: Cross-chain medical data sharing### 3. Emergency Use
 
+---
+
 2. **⚡ Scalability**: Parachain architecture handles growth1. Generate emergency QR
+
+## 🤝 Contributing
 
 3. **🛡️ Security**: Shared security from relay chain2. Shows: Blood type, allergies, contacts
 
+We welcome contributions! Please:
+
 4. **🌐 Decentralization**: True Web3 architecture3. First responder scans QR
 
-5. **🚀 Innovation**: Cutting-edge blockchain technology4. View critical info instantly
+1. Fork the repository
 
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)5. **🚀 Innovation**: Cutting-edge blockchain technology4. View critical info instantly
 
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+
+4. Push to branch (`git push origin feature/amazing-feature`)
+
+5. Open Pull Request
 
 ------
 
+---
 
+
+
+## 📄 License
 
 ## 🔒 Security## 🏗️ Key Features Implementation
 
+MIT License - see [LICENSE](LICENSE) file for details
 
+
+
+---
 
 ### Encryption Details:### Medical OCR Pipeline
 
+## 🙏 Acknowledgments
+
 ```javascript
 
-**Algorithm**: AES-256-GCM (Galois/Counter Mode)Upload Image → Tesseract OCR → Extract Text 
+- **Polkadot** - Blockchain infrastructure
 
-- **Key Size**: 256 bits (2^256 possible keys)→ GPT Medical Understanding → Auto-categorize 
+- **IPFS & Pinata** - Decentralized storage**Algorithm**: AES-256-GCM (Galois/Counter Mode)Upload Image → Tesseract OCR → Extract Text 
 
-- **IV Size**: 12 bytes (unique per file)→ Extract: Medications, Dosage, Doctor, Date
+- **Google Gemini** - AI-powered OCR
 
-- **Authentication**: Built-in tamper detection```
+- **Web3 Community** - Open-source inspiration- **Key Size**: 256 bits (2^256 possible keys)→ GPT Medical Understanding → Auto-categorize 
 
-- **Standard**: FIPS 140-2, HIPAA compliant
 
-### Encryption Flow
 
-### Security Flow:```javascript
+---- **IV Size**: 12 bytes (unique per file)→ Extract: Medications, Dosage, Doctor, Date
 
-File → AES-256-GCM (client-side) → IPFS Upload 
 
-```→ Get CID → Store CID + Hash on Polkadot 
 
-1. User uploads file→ Store encryption key (encrypted with wallet key)
+## 📞 Contact- **Authentication**: Built-in tamper detection```
 
-   ↓```
 
-2. Generate random 256-bit key
+
+**Project**: [github.com/Barathvasan2003/web3vault](https://github.com/Barathvasan2003/web3vault)  - **Standard**: FIPS 140-2, HIPAA compliant
+
+**Live Demo**: [web3vault-production.up.railway.app](https://web3vault-production.up.railway.app)  
+
+**Developer**: Barathvasan### Encryption Flow
+
+
+
+---### Security Flow:```javascript
+
+
+
+## 🎯 Future RoadmapFile → AES-256-GCM (client-side) → IPFS Upload 
+
+
+
+- [ ] Smart contract key encryption```→ Get CID → Store CID + Hash on Polkadot 
+
+- [ ] Multi-signature access control
+
+- [ ] NFT-based record transfers1. User uploads file→ Store encryption key (encrypted with wallet key)
+
+- [ ] Decentralized identity (DID) integration
+
+- [ ] Mobile app (React Native)   ↓```
+
+- [ ] Emergency access with trusted contacts
+
+- [ ] FHIR standard compliance2. Generate random 256-bit key
+
+- [ ] Multi-language support
 
    ↓### Access Control
 
+---
+
 3. Generate random 12-byte IV```javascript
+
+**Built with ❤️ for Web3 Hackathons** | **Privacy-First** | **Fully Decentralized**
 
    ↓Share Request → Generate JWT Token 
 
