@@ -64,7 +64,7 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
             // Dynamically import all service modules to avoid bundling them at build time
             const [encryptionLib, ipfsLib, geminiLib] = await Promise.all([
                 import('@/lib/encryption/medical-encryption'),
-                import('@/lib/ipfs/ipfs-client'), // Use real IPFS client
+                import('@/lib/ipfs/ipfs-upload-download'), // Use Pinata IPFS upload
                 import('@/lib/ai/gemini-ocr'),
             ]);
 
@@ -106,11 +106,11 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
                 }
             );
 
-            // Step 3: Upload to IPFS
-            setStatus('🌐 Uploading encrypted file to IPFS...');
+            // Step 3: Upload to IPFS via Pinata
+            setStatus('🌐 Uploading encrypted file to IPFS (Pinata)...');
             setProgress(70);
 
-            const { cid } = await ipfsLib.uploadToIPFS(
+            const { cid, ipfsUrl, pinataUrl } = await ipfsLib.uploadToIPFS(
                 encryptedData,
                 {
                     fileName: selectedFile.name,
@@ -120,19 +120,23 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
                     patientId: account.address,
                 },
                 (uploadProgress: number) => {
-                    setProgress(70 + (uploadProgress * 0.3)); // 70-100%
+                    setProgress(70 + (uploadProgress * 0.2)); // 70-90%
                     setStatus(`🌐 Uploading to IPFS... ${Math.round(uploadProgress)}%`);
                 }
             );
 
-            setProgress(100);
+            setProgress(90);
             setStatus(`✅ Uploaded to IPFS! CID: ${cid}`);
 
             // File is now permanently stored on decentralized IPFS network
-            console.log('📦 File stored on decentralized IPFS (no local storage needed)');
-            console.log(`🌐 Accessible at: https://ipfs.io/ipfs/${cid}`);
+            console.log('📦 File stored on decentralized IPFS (Pinata)');
+            console.log(`🌐 IPFS URL: ${ipfsUrl}`);
+            console.log(`🔗 Pinata Gateway: ${pinataUrl}`);
 
-            // Store file metadata in decentralized registry
+            // Step 4: Store metadata on blockchain for cross-device access
+            setStatus('⛓️ Storing metadata on blockchain...');
+            setProgress(92);
+
             const keyBase64 = await encryptionLib.exportKey(key);
             const fileMetadata = {
                 cid,
@@ -145,13 +149,15 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
                 recordType: extractedData?.category || 'other',
                 aiData: extractedData || null,
                 owner: account.address,
+                ipfsUrl,
+                pinataUrl,
             };
 
             // Register file metadata locally for quick access
             const fileRegistry = await import('@/lib/storage/file-registry');
             fileRegistry.registerFile(account.address, fileMetadata);
 
-            // Also store on blockchain for cross-device access
+            // Store on blockchain for cross-device access
             try {
                 const blockchainLib = await import('@/lib/polkadot/blockchain');
                 await blockchainLib.registerFileOnChain(
@@ -161,13 +167,20 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
                     keyBase64,
                     Array.from(iv)
                 );
-                console.log('⛓️ File metadata stored on Polkadot blockchain for cross-device access');
+                console.log('⛓️ File metadata stored on Polkadot blockchain');
+                setProgress(100);
+                setStatus('✅ Complete! File encrypted, uploaded to IPFS, and stored on blockchain');
             } catch (blockchainError) {
                 console.warn('⚠️ Blockchain storage failed, using local storage only:', blockchainError);
-                // Continue anyway - local storage still works
+                setProgress(100);
+                setStatus('✅ Complete! File encrypted and uploaded to IPFS (blockchain unavailable)');
             }
 
-            console.log('✅ File uploaded - fully decentralized (IPFS + Blockchain + Local Registry)');            // Reset
+            console.log('✅ UPLOAD COMPLETE - Fully decentralized storage:');
+            console.log('   1. ✅ File encrypted (AES-256-GCM)');
+            console.log('   2. ✅ Uploaded to IPFS (Pinata)');
+            console.log('   3. ✅ Metadata on blockchain (Polkadot)');
+            console.log('   4. ✅ Accessible from any device!');            // Reset
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
 

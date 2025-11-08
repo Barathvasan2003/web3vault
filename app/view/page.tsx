@@ -329,27 +329,27 @@ export default function ViewFilePage() {
             console.log('Key available:', !!encryptionKey);
             console.log('IV available:', iv.length > 0);
 
-            // Download encrypted file from IPFS (returns base64)
-            const ipfsClient = await import('@/lib/ipfs/ipfs-client');
-            const base64EncryptedData = await ipfsClient.downloadFile(cid);
+            // Download encrypted file from IPFS (Pinata)
+            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
+            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(
+                cid,
+                (progress) => {
+                    console.log(`📥 Downloading... ${progress}%`);
+                }
+            );
 
             console.log('✅ Encrypted file downloaded from IPFS');
-            console.log('📦 Data length:', base64EncryptedData.length);
 
-            // Store in localStorage for decrypt/download
-            try {
-                localStorage.setItem(`encrypted_${cid}`, base64EncryptedData);
-                console.log('💾 Cached encrypted data in localStorage');
-            } catch (e) {
-                console.warn('Could not cache:', e);
-            }
+            // Convert ArrayBuffer to base64 for compatibility with existing decrypt functions
+            const encryptionLib = await import('@/lib/encryption/medical-encryption');
+            const encryptedBase64 = encryptionLib.arrayBufferToBase64(encryptedArrayBuffer);
 
             // Create file object
             const file = {
                 cid: cid,
                 fileName: fileName || 'shared_medical_file',
                 fileType: fileType || 'application/octet-stream',
-                fileSize: base64EncryptedData.length,
+                fileSize: encryptedArrayBuffer.byteLength,
                 encryptionKey: encryptionKey,
                 iv: iv,
                 uploadDate: new Date().toISOString(),
@@ -358,8 +358,8 @@ export default function ViewFilePage() {
 
             setFileData(file);
 
-            // Decrypt and preview (pass base64 data)
-            await loadPreview(file, base64EncryptedData);
+            // Decrypt and preview
+            await loadPreview(file, encryptedBase64);
 
             console.log(`✅ File loaded and decrypted from IPFS`);
 
@@ -510,15 +510,29 @@ export default function ViewFilePage() {
         setDownloading(true);
         try {
             const encryptionLib = await import('@/lib/encryption/medical-encryption');
+
+            // Try to get from localStorage first
             const encryptedDataKey = `encrypted_${fileData.cid}`;
+            let encryptedArrayBuffer: ArrayBuffer;
+
             const storedEncryptedData = localStorage.getItem(encryptedDataKey);
 
-            if (!storedEncryptedData) {
-                throw new Error('File data not found');
+            if (storedEncryptedData) {
+                // Use data from localStorage
+                encryptedArrayBuffer = base64ToArrayBuffer(storedEncryptedData);
+            } else {
+                // Download from IPFS
+                console.log('📥 Downloading file from IPFS...');
+                const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
+                encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(
+                    fileData.cid,
+                    (progress) => {
+                        console.log(`📥 Downloading... ${progress}%`);
+                    }
+                );
             }
 
             // Decrypt
-            const encryptedArrayBuffer = base64ToArrayBuffer(storedEncryptedData);
             const key = await encryptionLib.importKey(fileData.encryptionKey);
             const iv = new Uint8Array(fileData.iv);
             const { fileData: decryptedData } = await encryptionLib.decryptMedicalFile(

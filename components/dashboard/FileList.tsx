@@ -91,23 +91,28 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
 
             console.log(`✅ Access verified: ${accessCheck.accessType}`);
 
-            // Fetch encrypted file from IPFS only
+            // Fetch encrypted file from IPFS (Pinata)
             const encryptionLib = await import('@/lib/encryption/medical-encryption');
-            const ipfsLib = await import('@/lib/ipfs/ipfs-client');
+            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
 
             // Get file from IPFS network
             console.log('📥 Fetching encrypted file from IPFS:', file.cid);
-            const result = await ipfsLib.downloadFromIPFS(file.cid);
+            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(
+                file.cid,
+                (progress) => {
+                    console.log(`📥 Downloading... ${progress}%`);
+                }
+            );
 
-            if (!result || !result.encryptedData) {
-                throw new Error('File not found on IPFS network. The file may not have been uploaded to NFT.Storage. Please re-upload with a valid NFT.Storage API key.');
+            if (!encryptedArrayBuffer || encryptedArrayBuffer.byteLength === 0) {
+                throw new Error('File not found on IPFS network. The file may not have been uploaded to Pinata. Please check your IPFS settings.');
             }
 
             // Decrypt the file
             const key = await encryptionLib.importKey(file.encryptionKey);
             const iv = new Uint8Array(file.iv);
             const { fileData: decryptedData } = await encryptionLib.decryptMedicalFile(
-                result.encryptedData,
+                encryptedArrayBuffer,
                 key,
                 iv
             );
@@ -128,37 +133,31 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         }
     };
 
-    const handleDelete = async (cid: string) => {
-        if (!confirm('Delete this file? It will be removed from your records.')) return;
+    const handleDelete = (cid: string) => {
+        if (!confirm('Delete this file? It will be removed from your local list only.')) return;
 
-        // Remove from file registry
-        const fileRegistry = await import('@/lib/storage/file-registry');
-        fileRegistry.removeFile(account.address, cid);
-
-        // Remove from local state
         const updatedFiles = files.filter(f => f.cid !== cid);
+        localStorage.setItem(`files_${account.address}`, JSON.stringify(updatedFiles));
         setFiles(updatedFiles);
-
-        console.log('🗑️ File deleted from registry:', cid);
     };
 
     const loadImagePreview = async (file: any) => {
         try {
             const encryptionLib = await import('@/lib/encryption/medical-encryption');
-            const ipfsLib = await import('@/lib/ipfs/ipfs-client');
+            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
 
-            // Try to get file from IPFS
+            // Try to get file from IPFS (Pinata)
             console.log('📥 Fetching image from IPFS:', file.cid);
-            const result = await ipfsLib.downloadFromIPFS(file.cid);
+            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(file.cid);
 
-            if (!result || !result.encryptedData) {
-                throw new Error('Image not found on IPFS network. Please re-upload with NFT.Storage API key.');
+            if (!encryptedArrayBuffer || encryptedArrayBuffer.byteLength === 0) {
+                throw new Error('Image not found on IPFS network. Please re-upload with Pinata API key.');
             }
 
             const key = await encryptionLib.importKey(file.encryptionKey);
             const iv = new Uint8Array(file.iv);
             const { fileData: decryptedData } = await encryptionLib.decryptMedicalFile(
-                result.encryptedData,
+                encryptedArrayBuffer,
                 key,
                 iv
             );
@@ -245,111 +244,42 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         }
 
         try {
-            // Import both ACL and secure share libraries
-            const accessControlLib = await import('@/lib/access/access-control');
-            const shareLib = await import('@/lib/sharing/secure-share');
+            // Import simple share library
+            const shareLib = await import('@/lib/sharing/simple-share');
 
-            // Get current ACL
-            const acl = accessControlLib.getACL(shareModal.cid);
-            if (!acl) {
-                alert('❌ Error: Access control list not found for this file.');
-                return;
-            }
-
-            // Verify current user is the owner
-            if (acl.owner !== account.address) {
-                alert('❌ Access Denied: Only the file owner can grant access to others.');
-                return;
-            }
-
-            // Calculate duration in hours
-            let durationHours: number | undefined;
-            let accessTypeForToken: 'one-time' | 'temporary' | 'permanent' = 'permanent';
-
-            if (shareOption === 'one-time') {
-                durationHours = 1;
-                accessTypeForToken = 'one-time';
-            } else if (shareOption === '24-hours') {
-                durationHours = 24;
-                accessTypeForToken = 'temporary';
-            } else if (shareOption === 'custom' && customDays > 0) {
-                durationHours = customDays * 24;
-                accessTypeForToken = 'temporary';
-            }
-
-            // Grant access in ACL
-            const accessType = shareOption === 'permanent' ? 'permanent' : 'temporary';
-            const updatedACL = accessControlLib.grantAccess(
-                acl,
-                shareWalletAddress,
-                accessType,
-                account.address, // grantedBy
-                durationHours
-            );
-
-            // Save updated ACL
-            accessControlLib.storeACL(updatedACL);
-
-            // Create secure share token
-            const shareToken = shareLib.createShareToken(
+            // Generate share link with CID + encryption key + IV
+            const shareLink = shareLib.generateShareLink(
                 shareModal.cid,
                 shareModal.encryptionKey,
                 shareModal.iv,
                 shareModal.fileName,
-                shareModal.fileType,
-                shareModal.fileSize || 0,
-                account.address,
-                shareWalletAddress,
-                accessTypeForToken,
-                durationHours
+                shareModal.fileType
             );
 
-            // Store share token
-            shareLib.storeShareToken(shareToken);
+            // Set the generated share link to display in UI
+            setGeneratedShareLink(shareLink);
 
-            // File is already on IPFS - use existing CID
-            console.log('📤 Generating share link with IPFS CID:', shareModal.cid);
+            // Copy share link to clipboard
+            const copied = await shareLib.copyShareLink(shareLink);
 
-            try {
-                // Upload share metadata to IPFS
-                const metadataCID = await shareLib.uploadShareTokenToIPFS(shareToken);
+            // Log share event
+            shareLib.logShareEvent(
+                shareModal.cid,
+                account.address,
+                shareWalletAddress || 'public',
+                'link'
+            );
 
-                // Generate share URL with existing file CID, metadata CID, and encryption key
-                const params = new URLSearchParams({
-                    cid: shareModal.cid, // Use existing file CID
-                    meta: metadataCID,
-                    token: shareToken.id,
-                    key: shareToken.encryptionKey // Add encryption key to URL
-                });
+            // Success message
+            alert(`✅ Share Link Generated!\n\nFile: ${shareModal.fileName}\nCID: ${shareModal.cid}\n\n🔗 Share Link:\n${shareLink}\n\n${copied ? '📋 Link copied to clipboard!' : 'Please copy the link manually'}\n\n⚠️ Anyone with this link can view the file.`);
 
-                const shareUrl = `${window.location.origin}/view?${params.toString()}`;
-
-                // Set the generated share link to display in UI
-                setGeneratedShareLink(shareUrl);
-
-                // Success message with share URL
-                let expiryMessage = '';
-                if (durationHours) {
-                    expiryMessage = `\nDuration: ${durationHours} hours`;
-                }
-
-                const message = `✅ Access Granted Successfully!\n\nFile CID: ${shareModal.cid}\nMetadata CID: ${metadataCID}\nWallet: ${shareWalletAddress}\nAccess Type: ${accessType}${expiryMessage}\n\n🔗 Secure Share Link:\n${shareUrl}\n\nCopy this link to share the file securely.`;
-
-                // Copy share URL to clipboard
-                navigator.clipboard.writeText(shareUrl);
-
-                alert(message + '\n\n📋 Share link copied to clipboard!');
-
-                // Don't clear wallet input so user can see what was granted
-
-            } catch (ipfsError: any) {
-                console.error('Error uploading metadata to IPFS:', ipfsError);
-                alert(`❌ Error creating share link: ${ipfsError.message}`);
-            }
+            console.log('📤 Share link generated successfully');
+            console.log('   CID:', shareModal.cid);
+            console.log('   Link:', shareLink);
 
         } catch (error: any) {
-            console.error('Error granting access:', error);
-            alert(`❌ Error granting access: ${error.message}`);
+            console.error('Error generating share link:', error);
+            alert(`❌ Error generating share link: ${error.message}`);
         }
     }; const handleViewAccessList = async () => {
         if (!shareModal) return;

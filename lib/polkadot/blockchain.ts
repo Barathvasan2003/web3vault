@@ -537,7 +537,10 @@ export async function getFilesFromBlockchain(walletAddress: string): Promise<any
 
         const files: any[] = [];
 
-        events.forEach((record: any) => {
+        // Cast events to array for iteration
+        const eventsArray = Array.isArray(events) ? events : Array.from(events as any);
+
+        eventsArray.forEach((record: any) => {
             const { event } = record;
 
             if (event.section === 'system' && event.method === 'Remarked') {
