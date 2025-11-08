@@ -140,10 +140,16 @@ export function getAccessToken(tokenId: string): AccessToken | null {
 /**
  * Validate if token is still valid
  */
-export function validateAccessToken(token: AccessToken): {
+export async function validateAccessToken(token: AccessToken): Promise<{
     valid: boolean;
     reason?: string;
-} {
+}> {
+    // Check if token has been burned globally (works across all devices!)
+    const burned = await isTokenBurned(token.tokenId);
+    if (burned) {
+        return { valid: false, reason: '🔥 This one-time link has already been used and is now burned' };
+    }
+
     // Check if token is active
     if (!token.isActive) {
         return { valid: false, reason: 'Token has been revoked' };
@@ -185,9 +191,53 @@ export function validateAccessToken(token: AccessToken): {
 }
 
 /**
+ * Check if a token has been burned globally
+ * NOTE: Currently uses localStorage only. For true cross-device burns,
+ * users would need to open the link on the same browser/device, OR
+ * we'd need a server/blockchain to track burns globally.
+ */
+export async function isTokenBurned(tokenId: string): Promise<boolean> {
+    try {
+        // Check localStorage burn list
+        const localBurnList = localStorage.getItem('burned_tokens_global');
+        if (localBurnList) {
+            const burnedTokens = JSON.parse(localBurnList);
+            return burnedTokens.includes(tokenId);
+        }
+
+        return false;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Burn a token (marks it as used)
+ * NOTE: This stores in localStorage, so the burn only persists on this browser/device.
+ * For true one-time links across all devices, you would need a server or blockchain.
+ */
+export async function burnToken(tokenId: string): Promise<void> {
+    try {
+        // Store in localStorage
+        let burnedTokens: string[] = [];
+        const localBurnList = localStorage.getItem('burned_tokens_global');
+        if (localBurnList) {
+            burnedTokens = JSON.parse(localBurnList);
+        }
+
+        if (!burnedTokens.includes(tokenId)) {
+            burnedTokens.push(tokenId);
+            localStorage.setItem('burned_tokens_global', JSON.stringify(burnedTokens));
+            console.log('🔥 Token burned (browser-specific):', tokenId);
+            console.log('⚠️ Note: Token can still be opened on other browsers/devices');
+        }
+    } catch (error) {
+        console.error('Failed to burn token:', error);
+    }
+}/**
  * Increment view count for a token
  */
-export function incrementViewCount(tokenId: string): void {
+export async function incrementViewCount(tokenId: string): Promise<void> {
     const token = getAccessToken(tokenId);
     if (!token) return;
 
@@ -196,6 +246,8 @@ export function incrementViewCount(tokenId: string): void {
     // Deactivate token if max views reached
     if (token.maxViews !== null && token.viewCount >= token.maxViews) {
         token.isActive = false;
+        // Burn token globally so it can't be used on any device
+        await burnToken(tokenId);
         console.log('🔒 Token burned after one-time use:', tokenId);
     }
 
@@ -304,7 +356,7 @@ export function getTokensForFile(cid: string): AccessToken[] {
 /**
  * Clean up expired tokens
  */
-export function cleanupExpiredTokens(): void {
+export async function cleanupExpiredTokens(): Promise<void> {
     const allTokensKey = 'all_access_tokens';
     const allTokensStr = localStorage.getItem(allTokensKey);
     const allTokenIds = allTokensStr ? JSON.parse(allTokensStr) : [];
@@ -315,7 +367,7 @@ export function cleanupExpiredTokens(): void {
         const token = getAccessToken(tokenId);
         if (!token) continue;
 
-        const validation = validateAccessToken(token);
+        const validation = await validateAccessToken(token);
 
         if (validation.valid || token.isActive) {
             activeTokenIds.push(tokenId);
@@ -332,8 +384,8 @@ export function cleanupExpiredTokens(): void {
 /**
  * Get human-readable token info
  */
-export function getTokenInfo(token: AccessToken): string {
-    const validation = validateAccessToken(token);
+export async function getTokenInfo(token: AccessToken): Promise<string> {
+    const validation = await validateAccessToken(token);
     const status = validation.valid ? '✅ Active' : `❌ ${validation.reason}`;
 
     let expiryInfo = '';

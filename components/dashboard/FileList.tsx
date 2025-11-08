@@ -55,7 +55,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                             fileRegistry.registerFile(account.address, bcFile);
                         }
                     });
-                    
+
                     // Update userFiles after sync
                     userFiles = allFiles;
                     console.log(`✅ Total files after blockchain sync: ${allFiles.length}`);

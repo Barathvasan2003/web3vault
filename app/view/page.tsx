@@ -151,14 +151,15 @@ export default function ViewFilePage() {
                 throw new Error('🔒 Share token not found or has expired.\n\nThis link may have been:\n• Used already (one-time access)\n• Expired (24-hour or custom time limit)\n• Revoked by the owner');
             }
 
-            // Validate access token
-            const validation = tokenLib.validateAccessToken(accessToken);
+            // Validate access token (checks blockchain for burns!)
+            const validation = await tokenLib.validateAccessToken(accessToken);
             if (!validation.valid) {
-                throw new Error(`🔒 Access Denied: ${validation.reason}\n\n${tokenLib.getTokenInfo(accessToken)}`);
+                const tokenInfo = await tokenLib.getTokenInfo(accessToken);
+                throw new Error(`🔒 Access Denied: ${validation.reason}\n\n${tokenInfo}`);
             }
 
             // Increment view count (will burn token if one-time access)
-            tokenLib.incrementViewCount(token);
+            await tokenLib.incrementViewCount(token);
 
             // Download encrypted file from IPFS
             const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
@@ -227,17 +228,18 @@ export default function ViewFilePage() {
                 throw new Error('🔒 Invalid or corrupted token data.\n\nThe share link may be incomplete or damaged.');
             }
 
-            // Validate access token
-            const validation = tokenLib.validateAccessToken(accessToken);
+            // Validate access token (checks blockchain for burns!)
+            const validation = await tokenLib.validateAccessToken(accessToken);
             if (!validation.valid) {
-                throw new Error(`🔒 Access Denied: ${validation.reason}\n\n${tokenLib.getTokenInfo(accessToken)}`);
+                const tokenInfo = await tokenLib.getTokenInfo(accessToken);
+                throw new Error(`🔒 Access Denied: ${validation.reason}\n\n${tokenInfo}`);
             }
 
             // Store token locally for tracking (optional)
             tokenLib.storeAccessToken(accessToken);
 
             // Increment view count (will burn token if one-time access)
-            tokenLib.incrementViewCount(token);
+            await tokenLib.incrementViewCount(token);
 
             // Download encrypted file from IPFS
             const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
