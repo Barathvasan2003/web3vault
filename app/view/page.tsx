@@ -215,11 +215,18 @@ export default function ViewFilePage() {
         setDecryptedPreview(null);
 
         try {
+            // Determine proper file type and name with extension
+            const detectedFileType = fileType || 'application/octet-stream';
+            const properFileName = ensureFileExtension(
+                fileName || 'shared_file',
+                detectedFileType
+            );
+
             // Create file object from URL parameters
             const file = {
                 cid: cid,
-                fileName: fileName || 'shared_file',
-                fileType: fileType || 'application/octet-stream',
+                fileName: properFileName,
+                fileType: detectedFileType,
                 fileSize: 0,
                 encryptionKey: encryptionKey,
                 iv: iv,
@@ -344,11 +351,18 @@ export default function ViewFilePage() {
             const encryptionLib = await import('@/lib/encryption/medical-encryption');
             const encryptedBase64 = encryptionLib.arrayBufferToBase64(encryptedArrayBuffer);
 
+            // Determine proper file type and name
+            const detectedFileType = fileType || 'application/octet-stream';
+            const properFileName = ensureFileExtension(
+                fileName || 'shared_medical_file',
+                detectedFileType
+            );
+
             // Create file object
             const file = {
                 cid: cid,
-                fileName: fileName || 'shared_medical_file',
-                fileType: fileType || 'application/octet-stream',
+                fileName: properFileName,
+                fileType: detectedFileType,
                 fileSize: encryptedArrayBuffer.byteLength,
                 encryptionKey: encryptionKey,
                 iv: iv,
@@ -433,11 +447,18 @@ export default function ViewFilePage() {
                 throw new Error('No encrypted data found. Please use the complete share link that includes the file data.');
             }
 
+            // Determine proper file type and name with extension
+            const detectedFileType = fileType || 'application/octet-stream';
+            const properFileName = ensureFileExtension(
+                fileName || `shared_file_${cid.slice(0, 8)}`,
+                detectedFileType
+            );
+
             // Create file metadata
             const file = {
                 cid,
-                fileName: fileName || `shared_file_${cid.slice(0, 8)}.dat`,
-                fileType: fileType || 'application/octet-stream',
+                fileName: properFileName,
+                fileType: detectedFileType,
                 fileSize: storedEncryptedData.length,
                 encryptionKey,
                 iv,
@@ -541,15 +562,17 @@ export default function ViewFilePage() {
                 iv
             );
 
-            // Download
+            // Download with proper filename and extension
+            const properFileName = ensureFileExtension(fileData.fileName, fileData.fileType);
             const blob = new Blob([decryptedData], { type: fileData.fileType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = fileData.fileName;
+            a.download = properFileName;
             a.click();
             URL.revokeObjectURL(url);
 
+            console.log('✅ Downloaded as:', properFileName);
             alert('✅ File downloaded and decrypted successfully!');
 
         } catch (err: any) {
@@ -566,6 +589,41 @@ export default function ViewFilePage() {
             bytes[i] = binaryString.charCodeAt(i);
         }
         return bytes.buffer;
+    };
+
+    /**
+     * Get proper file extension from MIME type
+     */
+    const getFileExtensionFromMimeType = (mimeType: string): string => {
+        const mimeToExt: { [key: string]: string } = {
+            'image/png': '.png',
+            'image/jpeg': '.jpg',
+            'image/jpg': '.jpg',
+            'image/gif': '.gif',
+            'image/webp': '.webp',
+            'image/svg+xml': '.svg',
+            'application/pdf': '.pdf',
+            'text/plain': '.txt',
+            'application/json': '.json',
+            'application/xml': '.xml',
+            'application/zip': '.zip',
+            'application/octet-stream': '.bin',
+        };
+        return mimeToExt[mimeType] || '.dat';
+    };
+
+    /**
+     * Ensure filename has proper extension
+     */
+    const ensureFileExtension = (fileName: string, fileType: string): string => {
+        // If fileName already has an extension, return as is
+        if (fileName && fileName.includes('.') && fileName.split('.').pop()!.length <= 5) {
+            return fileName;
+        }
+
+        // Add extension based on file type
+        const extension = getFileExtensionFromMimeType(fileType);
+        return fileName ? `${fileName}${extension}` : `shared_medical_file${extension}`;
     };
 
     const formatFileSize = (bytes: number) => {
