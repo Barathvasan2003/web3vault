@@ -192,47 +192,109 @@ export async function validateAccessToken(token: AccessToken): Promise<{
 
 /**
  * Check if a token has been burned globally
- * NOTE: Currently uses localStorage only. For true cross-device burns,
- * users would need to open the link on the same browser/device, OR
- * we'd need a server/blockchain to track burns globally.
+ * Uses Railway PostgreSQL database for true cross-device burn tracking
  */
 export async function isTokenBurned(tokenId: string): Promise<boolean> {
     try {
-        // Check localStorage burn list
-        const localBurnList = localStorage.getItem('burned_tokens_global');
-        if (localBurnList) {
-            const burnedTokens = JSON.parse(localBurnList);
-            return burnedTokens.includes(tokenId);
+        // Check database via API
+        const response = await fetch(`/api/tokens/check?tokenId=${encodeURIComponent(tokenId)}`);
+
+        if (!response.ok) {
+            console.warn('⚠️ Failed to check token burn status from database');
+            // Fallback to localStorage
+            if (typeof window !== 'undefined') {
+                const localBurnList = localStorage.getItem('burned_tokens_global');
+                if (localBurnList) {
+                    const burnedTokens = JSON.parse(localBurnList);
+                    return burnedTokens.includes(tokenId);
+                }
+            }
+            return false;
         }
 
-        return false;
-    } catch {
+        const data = await response.json();
+        return data.isBurned || false;
+    } catch (error) {
+        console.error('❌ Error checking token burn status:', error);
+        // Fallback to localStorage
+        if (typeof window !== 'undefined') {
+            const localBurnList = localStorage.getItem('burned_tokens_global');
+            if (localBurnList) {
+                const burnedTokens = JSON.parse(localBurnList);
+                return burnedTokens.includes(tokenId);
+            }
+        }
         return false;
     }
 }
 
 /**
- * Burn a token (marks it as used)
- * NOTE: This stores in localStorage, so the burn only persists on this browser/device.
- * For true one-time links across all devices, you would need a server or blockchain.
+ * Burn a token globally (marks it as used across ALL devices)
+ * Uses Railway PostgreSQL database for true cross-device burn tracking
  */
 export async function burnToken(tokenId: string): Promise<void> {
     try {
-        // Store in localStorage
-        let burnedTokens: string[] = [];
-        const localBurnList = localStorage.getItem('burned_tokens_global');
-        if (localBurnList) {
-            burnedTokens = JSON.parse(localBurnList);
-        }
+        // Burn token in database via API
+        const response = await fetch('/api/tokens/burn', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tokenId,
+                burnedAt: new Date().toISOString(),
+                metadata: {
+                    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+                }
+            })
+        });
 
-        if (!burnedTokens.includes(tokenId)) {
-            burnedTokens.push(tokenId);
-            localStorage.setItem('burned_tokens_global', JSON.stringify(burnedTokens));
-            console.log('🔥 Token burned (browser-specific):', tokenId);
-            console.log('⚠️ Note: Token can still be opened on other browsers/devices');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('🔥✅ Token burned globally in database:', tokenId);
+            console.log('🌍 This token is now burned across ALL devices');
+
+            // Also store in localStorage as backup
+            if (typeof window !== 'undefined') {
+                let burnedTokens: string[] = [];
+                const localBurnList = localStorage.getItem('burned_tokens_global');
+                if (localBurnList) {
+                    burnedTokens = JSON.parse(localBurnList);
+                }
+                if (!burnedTokens.includes(tokenId)) {
+                    burnedTokens.push(tokenId);
+                    localStorage.setItem('burned_tokens_global', JSON.stringify(burnedTokens));
+                }
+            }
+        } else {
+            console.warn('⚠️ Failed to burn token in database, using localStorage only');
+            // Fallback to localStorage
+            if (typeof window !== 'undefined') {
+                let burnedTokens: string[] = [];
+                const localBurnList = localStorage.getItem('burned_tokens_global');
+                if (localBurnList) {
+                    burnedTokens = JSON.parse(localBurnList);
+                }
+                if (!burnedTokens.includes(tokenId)) {
+                    burnedTokens.push(tokenId);
+                    localStorage.setItem('burned_tokens_global', JSON.stringify(burnedTokens));
+                }
+            }
         }
     } catch (error) {
-        console.error('Failed to burn token:', error);
+        console.error('❌ Failed to burn token:', error);
+        // Fallback to localStorage
+        if (typeof window !== 'undefined') {
+            let burnedTokens: string[] = [];
+            const localBurnList = localStorage.getItem('burned_tokens_global');
+            if (localBurnList) {
+                burnedTokens = JSON.parse(localBurnList);
+            }
+            if (!burnedTokens.includes(tokenId)) {
+                burnedTokens.push(tokenId);
+                localStorage.setItem('burned_tokens_global', JSON.stringify(burnedTokens));
+            }
+        }
     }
 }/**
  * Increment view count for a token
