@@ -289,36 +289,52 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         }
 
         try {
-            // Simple permanent share method (key in URL)
-            const shareLib = await import('@/lib/sharing/simple-share');
-            const shareLink = shareLib.generateShareLink(
+            // Use secure token-based sharing (encryption keys NOT in URL)
+            const tokenLib = await import('@/lib/sharing/access-tokens');
+
+            // Create access token
+            const token = tokenLib.createAccessToken(
                 shareModal.cid,
                 shareModal.encryptionKey,
                 shareModal.iv,
                 shareModal.fileName,
-                shareModal.fileType
+                shareModal.fileType,
+                shareOption, // 'one-time' | '24-hours' | 'permanent'
+                account.address,
+                customStartDate,
+                customEndDate
             );
+
+            // Store token
+            tokenLib.storeAccessToken(token);
+
+            // Generate short URL with token ID only
+            const shareLink = tokenLib.generateTokenUrl(token.tokenId);
 
             // Set the generated share link to display in UI
             setGeneratedShareLink(shareLink);
 
             // Copy share link to clipboard
-            const copied = await shareLib.copyShareLink(shareLink);
+            navigator.clipboard.writeText(shareLink);
 
-            // Log share event
-            shareLib.logShareEvent(
-                shareModal.cid,
-                account.address,
-                shareWalletAddress || 'public',
-                'link'
-            );
+            // Get token info for display
+            const tokenInfo = tokenLib.getTokenInfo(token);
 
             // Success message
-            alert(`✅ Share Link Generated!\n\n📄 File: ${shareModal.fileName}\n\n🔗 Share Link:\n${shareLink}\n\n${copied ? '📋 Link copied to clipboard!' : 'Please copy the link manually'}\n\n💡 Share this link securely with authorized recipients.`);
+            const shareTypeEmoji = shareOption === 'one-time' ? '🔒' :
+                shareOption === '24-hours' ? '⏰' : '♾️';
 
-            console.log('📤 Share link generated successfully');
+            const shareTypeText = shareOption === 'one-time' ? 'One-Time Access' :
+                shareOption === '24-hours' ? '24-Hour Access' :
+                    shareOption === 'custom' ? 'Custom Date Range' : 'Permanent Access';
+
+            alert(`✅ Secure Share Link Generated!\n\n${shareTypeEmoji} ${shareTypeText}\n📄 File: ${shareModal.fileName}\n\n🔗 Short Link:\n${shareLink}\n\n📋 Link copied to clipboard!\n\n🔐 Security: Encryption keys are NOT in the URL.\nOnly the token ID is visible.`);
+
+            console.log('📤 Secure token-based link generated');
+            console.log('   Token ID:', token.tokenId);
             console.log('   Type:', shareOption);
             console.log('   Link:', shareLink);
+            console.log('   Info:', tokenInfo);
 
         } catch (error: any) {
             console.error('Error generating share link:', error);
@@ -624,14 +640,86 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">Share Type:</label>
                                         <select
                                             value={shareOption}
-                                            onChange={(e) => setShareOption(e.target.value as 'one-time' | '24-hours' | 'permanent')}
+                                            onChange={(e) => {
+                                                const newOption = e.target.value as 'one-time' | '24-hours' | 'custom' | 'permanent';
+                                                setShareOption(newOption);
+
+                                                // Initialize custom dates when selecting custom option
+                                                if (newOption === 'custom') {
+                                                    const today = new Date().toISOString().split('T')[0];
+                                                    setCustomStartDate(today);
+                                                    setCustomEndDate('');
+                                                    setCustomDays(0);
+                                                }
+                                            }}
                                             className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-green-400"
                                         >
                                             <option value="one-time">🔒 One-Time Access (expires after 1 view)</option>
                                             <option value="24-hours">⏰ 24-Hour Access</option>
+                                            <option value="custom">📅 Custom Date Range</option>
                                             <option value="permanent">♾️ Permanent Access</option>
                                         </select>
                                     </div>
+
+                                    {/* Custom Date Range Picker */}
+                                    {shareOption === 'custom' && (
+                                        <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg sm:rounded-xl border border-purple-300">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 sm:mb-2">Start Date:</label>
+                                                    <input
+                                                        type="date"
+                                                        value={customStartDate}
+                                                        onChange={(e) => {
+                                                            setCustomStartDate(e.target.value);
+                                                            // Recalculate days if both dates are set
+                                                            if (customEndDate && e.target.value) {
+                                                                const start = new Date(e.target.value);
+                                                                const end = new Date(customEndDate);
+                                                                const diffTime = end.getTime() - start.getTime();
+                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                setCustomDays(diffDays > 0 ? diffDays : 0);
+                                                            }
+                                                        }}
+                                                        className="w-full px-2 sm:px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-purple-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-700 mb-1 sm:mb-2">End Date:</label>
+                                                    <input
+                                                        type="date"
+                                                        value={customEndDate}
+                                                        onChange={(e) => {
+                                                            setCustomEndDate(e.target.value);
+                                                            // Calculate days between dates
+                                                            if (customStartDate && e.target.value) {
+                                                                const start = new Date(customStartDate);
+                                                                const end = new Date(e.target.value);
+                                                                const diffTime = end.getTime() - start.getTime();
+                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                setCustomDays(diffDays > 0 ? diffDays : 0);
+                                                            }
+                                                        }}
+                                                        min={customStartDate}
+                                                        className="w-full px-2 sm:px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-purple-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            {customDays > 0 && (
+                                                <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-white rounded-lg border border-purple-400">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs sm:text-sm font-bold text-gray-700">Access Duration:</span>
+                                                        <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                                            {customDays} {customDays === 1 ? 'Day' : 'Days'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 mt-1">
+                                                        {new Date(customStartDate).toLocaleDateString()} → {new Date(customEndDate).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Generated Link Display */}
                                     {generatedShareLink ? (

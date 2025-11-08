@@ -128,72 +128,62 @@ export default function ViewFilePage() {
         setDecryptedPreview(null);
 
         try {
-            // Get authenticated wallet
-            const polka = await import('@/lib/polkadot/blockchain');
-            let authenticatedWallet = null;
+            // Use new access-tokens system (secure, time-limited, no keys in URL)
+            const tokenLib = await import('@/lib/sharing/access-tokens');
 
-            try {
-                const accounts = await polka.getWalletAccounts();
-                if (accounts.length > 0) {
-                    authenticatedWallet = accounts[0].address;
-                    setAccount(accounts[0]);
-                }
-            } catch (e) {
-                setError('❌ Please connect your Polkadot wallet to access this shared file.');
-                setLoading(false);
-                return;
+            // Get access token
+            const accessToken = tokenLib.getAccessToken(token);
+
+            if (!accessToken) {
+                throw new Error('🔒 Share token not found or has expired.\n\nThis link may have been:\n• Used already (one-time access)\n• Expired (24-hour or custom time limit)\n• Revoked by the owner');
             }
 
-            if (!authenticatedWallet) {
-                setError('❌ Please connect your Polkadot wallet to access this shared file.');
-                setLoading(false);
-                return;
-            }
-
-            // Get share token
-            const shareLib = await import('@/lib/sharing/secure-share');
-            const shareToken = shareLib.getShareToken(token);
-
-            if (!shareToken) {
-                throw new Error('Share token not found. The link may have expired or been revoked.');
-            }
-
-            // Validate share token
-            const validation = shareLib.validateShareToken(shareToken, authenticatedWallet);
+            // Validate access token
+            const validation = tokenLib.validateAccessToken(accessToken);
             if (!validation.valid) {
-                throw new Error(validation.reason || 'Invalid share token');
+                throw new Error(`🔒 Access Denied: ${validation.reason}\n\n${tokenLib.getTokenInfo(accessToken)}`);
             }
 
-            // Increment access count
-            shareLib.incrementAccessCount(token);
+            // Increment view count (will burn token if one-time access)
+            tokenLib.incrementViewCount(token);
 
-            // Get encrypted data from localStorage
-            const encryptedDataKey = `encrypted_${shareToken.cid}`;
-            let storedEncryptedData = localStorage.getItem(encryptedDataKey);
+            // Download encrypted file from IPFS
+            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
+            console.log('📥 Downloading file from IPFS:', accessToken.cid);
 
-            if (!storedEncryptedData) {
-                throw new Error('Encrypted file data not found. The file owner needs to upload it to IPFS or send a complete share link.');
-            }
+            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(accessToken.cid);
+
+            // Convert ArrayBuffer to base64 string for decryption
+            const uint8Array = new Uint8Array(encryptedArrayBuffer);
+            const binaryString = Array.from(uint8Array).map(byte => String.fromCharCode(byte)).join('');
+            const encryptedDataB64 = btoa(binaryString);
 
             // Create file object with token data
             const file = {
-                cid: shareToken.cid,
-                fileName: shareToken.fileName,
-                fileType: shareToken.fileType,
-                fileSize: shareToken.fileSize,
-                encryptionKey: shareToken.encryptionKey,
-                iv: shareToken.iv,
-                uploadDate: new Date(shareToken.createdAt).toISOString(),
-                sharedBy: shareToken.sharedBy,
-                accessType: shareToken.accessType
+                cid: accessToken.cid,
+                fileName: accessToken.fileName,
+                fileType: accessToken.fileType,
+                fileSize: 0,
+                encryptionKey: accessToken.encryptionKey,
+                iv: accessToken.iv,
+                uploadDate: accessToken.createdAt,
+                shareType: accessToken.shareType,
+                viewCount: accessToken.viewCount,
+                expiresAt: accessToken.expiresAt
             };
 
             setFileData(file);
 
             // Try to decrypt and preview
-            await loadPreview(file, storedEncryptedData);
+            await loadPreview(file, encryptedDataB64);
 
-            console.log(`✅ File loaded via secure token (${shareToken.accessType})`);
+            const shareTypeEmoji = accessToken.shareType === 'one-time' ? '🔒' :
+                accessToken.shareType === '24-hours' ? '⏰' : '♾️';
+
+            console.log(`✅ File loaded via secure token`);
+            console.log(`   ${shareTypeEmoji} Type: ${accessToken.shareType}`);
+            console.log(`   👁️ Views: ${accessToken.viewCount}`);
+            console.log(`   📅 Expires: ${accessToken.expiresAt || 'Never'}`);
 
         } catch (err: any) {
             setError(err.message);
