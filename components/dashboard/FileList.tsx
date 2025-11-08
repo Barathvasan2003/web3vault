@@ -283,34 +283,79 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
     };
 
     const handleGrantAccess = async () => {
-        if (!shareModal || !shareWalletAddress) {
-            alert('❌ Please enter a wallet address to grant access to.');
-            return;
-        }
-
-        // Basic validation for Polkadot address (should start with 1, 5, or similar)
-        if (shareWalletAddress.length < 40) {
-            alert('❌ Invalid Polkadot wallet address. Please check and try again.');
+        if (!shareModal) {
+            alert('❌ No file selected for sharing.');
             return;
         }
 
         try {
-            // Import simple share library
-            const shareLib = await import('@/lib/sharing/simple-share');
+            const tokenLib = await import('@/lib/sharing/access-tokens');
+            let shareLink: string;
+            let tokenInfo: string = '';
 
-            // Generate share link with CID + encryption key + IV
-            const shareLink = shareLib.generateShareLink(
-                shareModal.cid,
-                shareModal.encryptionKey,
-                shareModal.iv,
-                shareModal.fileName,
-                shareModal.fileType
-            );
+            // Determine share type and create appropriate token
+            if (shareOption === 'permanent') {
+                // Old simple share method (key in URL)
+                const shareLib = await import('@/lib/sharing/simple-share');
+                shareLink = shareLib.generateShareLink(
+                    shareModal.cid,
+                    shareModal.encryptionKey,
+                    shareModal.iv,
+                    shareModal.fileName,
+                    shareModal.fileType
+                );
+                tokenInfo = '♾️ Type: Permanent Access\n⚠️ This link never expires and can be used unlimited times.';
+
+            } else {
+                // Create access token for time-limited sharing
+                const tokenOptions: any = {};
+
+                if (shareOption === 'custom' && customStartDate && customEndDate) {
+                    tokenOptions.validFrom = new Date(customStartDate).getTime();
+                    tokenOptions.validUntil = new Date(customEndDate).getTime();
+                } else if (shareOption === 'custom' && customDays > 0) {
+                    tokenOptions.customDays = customDays;
+                }
+
+                const token = tokenLib.createAccessToken(
+                    shareModal.cid,
+                    shareModal.encryptionKey,
+                    shareModal.iv,
+                    shareModal.fileName,
+                    shareModal.fileType,
+                    shareOption,
+                    account.address,
+                    tokenOptions
+                );
+
+                // Store token
+                tokenLib.storeAccessToken(token);
+
+                // Generate link with token
+                shareLink = tokenLib.generateTokenLink(token.tokenId);
+
+                // Create token info string
+                switch (shareOption) {
+                    case 'one-time':
+                        tokenInfo = '🔒 Type: One-Time Access\n✓ Link expires after first view\n✓ Maximum security';
+                        break;
+                    case '24-hours':
+                        const expiry24h = new Date(token.expiresAt!).toLocaleString();
+                        tokenInfo = `⏰ Type: 24-Hour Access\n✓ Expires: ${expiry24h}\n✓ Unlimited views until expiry`;
+                        break;
+                    case 'custom':
+                        const validFrom = token.validFrom ? new Date(token.validFrom).toLocaleString() : 'Now';
+                        const validUntil = token.validUntil ? new Date(token.validUntil).toLocaleString() : 'Never';
+                        tokenInfo = `📅 Type: Custom Date Range\n✓ Valid from: ${validFrom}\n✓ Valid until: ${validUntil}`;
+                        break;
+                }
+            }
 
             // Set the generated share link to display in UI
             setGeneratedShareLink(shareLink);
 
             // Copy share link to clipboard
+            const shareLib = await import('@/lib/sharing/simple-share');
             const copied = await shareLib.copyShareLink(shareLink);
 
             // Log share event
@@ -322,10 +367,10 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             );
 
             // Success message
-            alert(`✅ Share Link Generated!\n\nFile: ${shareModal.fileName}\nCID: ${shareModal.cid}\n\n🔗 Share Link:\n${shareLink}\n\n${copied ? '📋 Link copied to clipboard!' : 'Please copy the link manually'}\n\n⚠️ Anyone with this link can view the file.`);
+            alert(`✅ Share Link Generated!\n\n📄 File: ${shareModal.fileName}\n${tokenInfo}\n\n🔗 Share Link:\n${shareLink}\n\n${copied ? '📋 Link copied to clipboard!' : 'Please copy the link manually'}\n\n💡 Share this link securely with authorized recipients.`);
 
             console.log('📤 Share link generated successfully');
-            console.log('   CID:', shareModal.cid);
+            console.log('   Type:', shareOption);
             console.log('   Link:', shareLink);
 
         } catch (error: any) {
