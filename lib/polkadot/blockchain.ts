@@ -476,3 +476,99 @@ export async function isBlockchainConnected(): Promise<boolean> {
         return false;
     }
 }
+
+/**
+ * Register file metadata on blockchain for cross-device access
+ * Stores: CID, filename, encryption key, and IV on-chain
+ * This allows users to access their files from any device
+ */
+export async function registerFileOnChain(
+    account: InjectedAccountWithMeta,
+    cid: string,
+    fileName: string,
+    encryptionKey: string,
+    iv: number[]
+): Promise<void> {
+    if (!api) {
+        throw new Error('Blockchain API not initialized');
+    }
+
+    try {
+        const injector = await web3FromAddress(account.address);
+
+        // Create remark with file metadata (stored on-chain)
+        const metadata = {
+            type: 'MEDICAL_FILE',
+            cid,
+            fileName,
+            encryptionKey,
+            iv,
+            owner: account.address,
+            timestamp: Date.now()
+        };
+
+        const remarkData = JSON.stringify(metadata);
+        const remarkTx = api.tx.system.remark(remarkData);
+
+        // Sign and send transaction
+        await remarkTx.signAndSend(account.address, { signer: injector.signer });
+
+        console.log('⛓️ File metadata registered on blockchain:', cid);
+    } catch (error: any) {
+        console.error('❌ Blockchain registration failed:', error);
+        throw new Error('Failed to register file on blockchain: ' + error.message);
+    }
+}
+
+/**
+ * Get files from blockchain for a wallet address
+ * This enables cross-device file access
+ */
+export async function getFilesFromBlockchain(walletAddress: string): Promise<any[]> {
+    if (!api) {
+        console.warn('Blockchain not connected, using local storage only');
+        return [];
+    }
+
+    try {
+        // Query system.remarks for file metadata
+        const blockHash = await api.rpc.chain.getBlockHash();
+        const events = await api.query.system.events.at(blockHash);
+
+        const files: any[] = [];
+
+        events.forEach((record: any) => {
+            const { event } = record;
+
+            if (event.section === 'system' && event.method === 'Remarked') {
+                try {
+                    const remarkData = event.data[1].toString();
+                    const metadata = JSON.parse(remarkData);
+
+                    if (
+                        metadata.type === 'MEDICAL_FILE' &&
+                        metadata.owner === walletAddress
+                    ) {
+                        files.push({
+                            cid: metadata.cid,
+                            fileName: metadata.fileName,
+                            encryptionKey: metadata.encryptionKey,
+                            iv: metadata.iv,
+                            uploadedAt: new Date(metadata.timestamp).toISOString(),
+                            owner: metadata.owner,
+                            fromBlockchain: true
+                        });
+                    }
+                } catch (e) {
+                    // Invalid remark, skip
+                }
+            }
+        });
+
+        console.log(`⛓️ Found ${files.length} files on blockchain`);
+        return files;
+    } catch (error: any) {
+        console.error('❌ Failed to query blockchain:', error);
+        return [];
+    }
+}

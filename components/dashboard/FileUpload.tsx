@@ -147,11 +147,27 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
                 owner: account.address,
             };
 
-            // Register file metadata
+            // Register file metadata locally for quick access
             const fileRegistry = await import('@/lib/storage/file-registry');
             fileRegistry.registerFile(account.address, fileMetadata);
 
-            console.log('✅ File uploaded - fully decentralized (IPFS + Registry)');            // Reset
+            // Also store on blockchain for cross-device access
+            try {
+                const blockchainLib = await import('@/lib/polkadot/blockchain');
+                await blockchainLib.registerFileOnChain(
+                    account,
+                    cid,
+                    selectedFile.name,
+                    keyBase64,
+                    Array.from(iv)
+                );
+                console.log('⛓️ File metadata stored on Polkadot blockchain for cross-device access');
+            } catch (blockchainError) {
+                console.warn('⚠️ Blockchain storage failed, using local storage only:', blockchainError);
+                // Continue anyway - local storage still works
+            }
+
+            console.log('✅ File uploaded - fully decentralized (IPFS + Blockchain + Local Registry)');            // Reset
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
 

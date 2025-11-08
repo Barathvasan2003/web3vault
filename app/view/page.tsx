@@ -66,12 +66,15 @@ export default function ViewFilePage() {
             setToken(tokenParam);
             setAutoLoading(true);
         } else {
-            // Legacy method with URL parameters
+            // Simple share link: just cid + key + iv
             if (cidParam) setCid(cidParam);
             if (keyParam) setEncryptionKey(keyParam);
             if (ivParam) {
                 try {
-                    const parsedIv = JSON.parse(ivParam);
+                    // Handle both JSON array format and comma-separated format
+                    const parsedIv = ivParam.startsWith('[')
+                        ? JSON.parse(ivParam)
+                        : ivParam.split(',').map(n => parseInt(n.trim()));
                     setIv(parsedIv);
                 } catch (e) {
                     console.error('Failed to parse IV:', e);
@@ -81,8 +84,8 @@ export default function ViewFilePage() {
             if (fileNameParam) setFileName(fileNameParam);
             if (fileTypeParam) setFileType(fileTypeParam);
 
-            // Auto-load if all required params present
-            if (cidParam && keyParam && ivParam && dataParam) {
+            // Auto-load if we have cid + key + iv (will fetch from IPFS)
+            if (cidParam && keyParam && ivParam) {
                 setAutoLoading(true);
             }
         }
@@ -103,6 +106,9 @@ export default function ViewFilePage() {
             } else if (token) {
                 // Token-only URL (requires localStorage)
                 loadFileFromToken();
+            } else if (cid && encryptionKey && iv.length > 0) {
+                // Simple share link: cid + key + iv (fetch from IPFS)
+                loadFileFromIPFSSimple();
             } else if (cid && encryptionKey && iv.length > 0 && encryptedData) {
                 // Legacy method
                 loadFile();
@@ -296,6 +302,61 @@ export default function ViewFilePage() {
         } catch (err: any) {
             setError(err.message || 'Failed to load file from IPFS');
             console.error('IPFS load error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadFileFromIPFSSimple = async () => {
+        if (!cid || !encryptionKey || !iv.length) {
+            const missing = [];
+            if (!cid) missing.push('CID');
+            if (!encryptionKey) missing.push('Encryption Key');
+            if (!iv.length) missing.push('IV');
+            setError(`Missing required parameters: ${missing.join(', ')}. Please use the complete share link.`);
+            console.error('❌ Missing parameters:', { cid: !!cid, key: !!encryptionKey, iv: iv.length });
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setFileData(null);
+        setDecryptedPreview(null);
+
+        try {
+            console.log('📡 Loading file from IPFS using simple share link...');
+            console.log('CID:', cid);
+            console.log('Key available:', !!encryptionKey);
+            console.log('IV available:', iv.length > 0);
+
+            // Download encrypted file from IPFS
+            const ipfsClient = await import('@/lib/ipfs/ipfs-client');
+            const encryptedFileData = await ipfsClient.downloadFile(cid);
+
+            console.log('✅ Encrypted file downloaded from IPFS');
+
+            // Create file object
+            const file = {
+                cid: cid,
+                fileName: fileName || 'shared_medical_file',
+                fileType: fileType || 'application/octet-stream',
+                fileSize: encryptedFileData.length,
+                encryptionKey: encryptionKey,
+                iv: iv,
+                uploadDate: new Date().toISOString(),
+                sharedViaLink: true
+            };
+
+            setFileData(file);
+
+            // Decrypt and preview
+            await loadPreview(file, encryptedFileData);
+
+            console.log(`✅ File loaded and decrypted from IPFS`);
+
+        } catch (err: any) {
+            setError(err.message || 'Failed to load file from IPFS. The file may not be available.');
+            console.error('IPFS simple load error:', err);
         } finally {
             setLoading(false);
         }
@@ -540,7 +601,18 @@ export default function ViewFilePage() {
                     )}
 
                     <button
-                        onClick={loadFile}
+                        onClick={() => {
+                            // Determine which load function to use based on available data
+                            if (cid && encryptionKey && iv.length > 0 && !encryptedData) {
+                                // Simple share link - fetch from IPFS
+                                loadFileFromIPFSSimple();
+                            } else if (cid && encryptionKey && iv.length > 0 && encryptedData) {
+                                // Legacy method with embedded data
+                                loadFile();
+                            } else {
+                                setError('Missing required parameters. Please use a complete share link.');
+                            }
+                        }}
                         disabled={loading || !cid || !encryptionKey}
                         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >

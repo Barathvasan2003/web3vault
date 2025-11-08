@@ -35,8 +35,31 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             const sharedFiles = fileRegistry.getSharedFiles(account.address);
             setFiles(sharedFiles);
         } else {
-            // Load user's own files from registry
+            // Load user's own files from local registry
             const userFiles = fileRegistry.getFiles(account.address);
+
+            // Also try to load from blockchain for cross-device sync
+            try {
+                const blockchainLib = await import('@/lib/polkadot/blockchain');
+                const blockchainFiles = await blockchainLib.getFilesFromBlockchain(account.address);
+
+                if (blockchainFiles.length > 0) {
+                    console.log(`⛓️ Loaded ${blockchainFiles.length} files from blockchain`);
+
+                    // Merge blockchain files with local files (remove duplicates by CID)
+                    const allFiles = [...userFiles];
+                    blockchainFiles.forEach(bcFile => {
+                        if (!allFiles.some(f => f.cid === bcFile.cid)) {
+                            allFiles.push(bcFile);
+                        }
+                    });
+                    setFiles(allFiles.reverse());
+                    return;
+                }
+            } catch (blockchainError) {
+                console.warn('⚠️ Blockchain sync failed, using local storage only:', blockchainError);
+            }
+
             setFiles(userFiles.reverse());
         }
     };
