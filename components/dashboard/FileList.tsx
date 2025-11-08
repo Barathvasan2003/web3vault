@@ -36,31 +36,36 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             setFiles(sharedFiles);
         } else {
             // Load user's own files from local registry
-            const userFiles = fileRegistry.getFiles(account.address);
+            let userFiles = fileRegistry.getFiles(account.address);
+            console.log(`📂 Local storage has ${userFiles.length} files`);
 
-            // Also try to load from blockchain for cross-device sync
+            // ALWAYS try to load from blockchain for cross-device sync
             try {
                 const blockchainLib = await import('@/lib/polkadot/blockchain');
                 const blockchainFiles = await blockchainLib.getFilesFromBlockchain(account.address);
+                console.log(`⛓️ Blockchain has ${blockchainFiles.length} files`);
 
                 if (blockchainFiles.length > 0) {
-                    console.log(`⛓️ Loaded ${blockchainFiles.length} files from blockchain`);
-
                     // Merge blockchain files with local files (remove duplicates by CID)
                     const allFiles = [...userFiles];
                     blockchainFiles.forEach(bcFile => {
                         if (!allFiles.some(f => f.cid === bcFile.cid)) {
                             allFiles.push(bcFile);
+                            // Save blockchain file to local storage for faster future access
+                            fileRegistry.registerFile(account.address, bcFile);
                         }
                     });
-                    setFiles(allFiles.reverse());
-                    return;
+                    
+                    // Update userFiles after sync
+                    userFiles = allFiles;
+                    console.log(`✅ Total files after blockchain sync: ${allFiles.length}`);
                 }
             } catch (blockchainError) {
                 console.warn('⚠️ Blockchain sync failed, using local storage only:', blockchainError);
             }
 
             setFiles(userFiles.reverse());
+            console.log(`📊 Displaying ${userFiles.length} files in dashboard`);
         }
     };
 
