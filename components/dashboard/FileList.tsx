@@ -16,7 +16,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
     const [isEditingAI, setIsEditingAI] = useState(false);
     const [editedAIData, setEditedAIData] = useState<any>(null);
     const [imagePreviewModal, setImagePreviewModal] = useState<any>(null);
-    const [shareOption, setShareOption] = useState<'one-time' | '24-hours' | 'custom' | 'permanent'>('permanent');
+    const [shareOption, setShareOption] = useState<'one-time' | '24-hours' | 'custom' | 'permanent'>('one-time');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [customDays, setCustomDays] = useState(0);
@@ -590,7 +590,15 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     )}
                                 </button>
                                 <button
-                                    onClick={() => setShareModal(file)}
+                                    onClick={() => {
+                                        setShareModal(file);
+                                        setShareOption('one-time'); // Default to most secure option
+                                        setGeneratedShareLink(''); // Clear previous link
+                                        setCustomStartDate('');
+                                        setCustomEndDate('');
+                                        setCustomDays(0);
+                                        setShareWalletAddress('');
+                                    }}
                                     className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl hover:scale-105"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
