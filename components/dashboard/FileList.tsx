@@ -576,12 +576,12 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 </div>
             </div>
 
-            {/* Share Modal */}
+            {/* Share Modal - Responsive & Clean */}
             {shareModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-white max-w-2xl w-full rounded-3xl p-8 border border-gray-200 shadow-2xl">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+                    <div className="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-200 shadow-2xl my-4 max-h-[95vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-4 sm:mb-6">
+                            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                                 🔗 Share File
                             </h3>
                             <button
@@ -591,64 +591,79 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     setShareWalletAddress('');
                                     setGeneratedShareLink('');
                                 }}
-                                className="text-4xl text-gray-400 hover:text-gray-600 transition-colors"
+                                className="text-3xl sm:text-4xl text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 ×
                             </button>
-                        </div>                        <div className="space-y-6">
-                            {/* Simplified Share UI */}
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-300">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <span className="text-3xl">🔗</span>
+                        </div>                        <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                            {/* File Information */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl border border-green-200">
+                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                                    <span className="text-2xl sm:text-3xl">📁</span>
                                     <div>
-                                        <h4 className="text-lg font-bold text-gray-800">Share File</h4>
-                                        <p className="text-sm text-gray-600">Generate a secure link to share this file</p>
+                                        <h4 className="text-base sm:text-lg font-bold text-gray-800">{shareModal.fileName}</h4>
+                                        <p className="text-xs sm:text-sm text-gray-600">Select share type and generate link</p>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-600 mb-2">File CID:</label>
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">IPFS CID:</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 value={shareModal.cid}
                                                 readOnly
-                                                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 rounded-xl text-sm font-mono text-gray-800"
+                                                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm font-mono text-gray-800"
                                             />
                                         </div>
                                     </div>
 
+                                    {/* Share Type Selection */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">Share Type:</label>
+                                        <select
+                                            value={shareOption}
+                                            onChange={(e) => setShareOption(e.target.value as 'one-time' | '24-hours' | 'permanent')}
+                                            className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-green-400"
+                                        >
+                                            <option value="one-time">🔒 One-Time Access (expires after 1 view)</option>
+                                            <option value="24-hours">⏰ 24-Hour Access</option>
+                                            <option value="permanent">♾️ Permanent Access</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Generated Link Display */}
                                     {generatedShareLink ? (
-                                        <div className="p-4 bg-white rounded-xl border-2 border-green-400">
-                                            <p className="text-sm font-semibold text-green-800 mb-3">✅ Share Link Generated!</p>
-                                            <div className="flex gap-2 mb-3">
+                                        <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl border-2 border-green-400">
+                                            <p className="text-xs sm:text-sm font-semibold text-green-800 mb-2 sm:mb-3">✅ Share Link Generated!</p>
+                                            <div className="flex flex-col sm:flex-row gap-2 mb-2 sm:mb-3">
                                                 <input
                                                     type="text"
                                                     value={generatedShareLink}
                                                     readOnly
-                                                    className="flex-1 px-3 py-2 bg-gray-50 border-2 border-green-300 rounded-lg text-xs font-mono text-gray-800"
+                                                    className="flex-1 px-2 sm:px-3 py-2 bg-gray-50 border border-green-300 rounded-lg text-xs font-mono text-gray-800 break-all"
                                                 />
                                                 <button
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(generatedShareLink);
                                                         alert('✅ Link copied!');
                                                     }}
-                                                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold"
+                                                    className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap"
                                                 >
                                                     📋 Copy
                                                 </button>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-col sm:flex-row gap-2">
                                                 <button
                                                     onClick={() => window.open(generatedShareLink, '_blank')}
-                                                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold"
+                                                    className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold text-xs sm:text-sm"
                                                 >
                                                     🔗 Open Link
                                                 </button>
                                                 <button
                                                     onClick={() => setShareModal(null)}
-                                                    className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-bold"
+                                                    className="px-3 sm:px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-bold text-xs sm:text-sm"
                                                 >
                                                     ✅ Done
                                                 </button>
@@ -657,295 +672,35 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     ) : (
                                         <button
                                             onClick={handleGrantAccess}
-                                            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                                            className="w-full py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"
                                         >
                                             🔗 Generate Share Link
                                         </button>
                                     )}
                                 </div>
                             </div>
-                            <div className="hidden">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">OLD UI HIDDEN:</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setShareOption('one-time')}
-                                        className={`p-4 rounded-xl border-2 transition-all text-left ${shareOption === 'one-time'
-                                            ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg'
-                                            : 'border-gray-300 bg-white hover:border-green-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-2xl">🔒</span>
-                                            <span className="font-bold text-gray-800">One-Time Access</span>
-                                        </div>
-                                        <p className="text-xs text-gray-600">Link expires after first view</p>
-                                    </button>
 
-                                    <button
-                                        onClick={() => setShareOption('24-hours')}
-                                        className={`p-4 rounded-xl border-2 transition-all text-left ${shareOption === '24-hours'
-                                            ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg'
-                                            : 'border-gray-300 bg-white hover:border-blue-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-2xl">⏰</span>
-                                            <span className="font-bold text-gray-800">24 Hours</span>
-                                        </div>
-                                        <p className="text-xs text-gray-600">Access for 1 day</p>
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            setShareOption('custom');
-                                            const today = new Date().toISOString().split('T')[0];
-                                            setCustomStartDate(today);
-                                            setCustomEndDate('');
-                                            setCustomDays(0);
-                                        }}
-                                        className={`p-4 rounded-xl border-2 transition-all text-left ${shareOption === 'custom'
-                                            ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg'
-                                            : 'border-gray-300 bg-white hover:border-purple-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-2xl">📅</span>
-                                            <span className="font-bold text-gray-800">Custom Date Range</span>
-                                        </div>
-                                        <p className="text-xs text-gray-600">Choose start and end dates</p>
-                                    </button>
-
-                                    <button
-                                        onClick={() => setShareOption('permanent')}
-                                        className={`p-4 rounded-xl border-2 transition-all text-left ${shareOption === 'permanent'
-                                            ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-lg'
-                                            : 'border-gray-300 bg-white hover:border-indigo-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-2xl">♾️</span>
-                                            <span className="font-bold text-gray-800">Permanent Access</span>
-                                        </div>
-                                        <p className="text-xs text-gray-600">No expiration - access anytime</p>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Custom Date Picker */}
-                            {shareOption === 'custom' && (
-                                <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-5 rounded-2xl border-2 border-purple-300">
-                                    <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-2">Start Date:</label>
-                                            <input
-                                                type="date"
-                                                value={customStartDate}
-                                                onChange={(e) => handleDateChange('start', e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border-2 border-purple-300 rounded-xl text-sm font-medium text-gray-800 focus:border-purple-500 focus:outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-2">End Date:</label>
-                                            <input
-                                                type="date"
-                                                value={customEndDate}
-                                                onChange={(e) => handleDateChange('end', e.target.value)}
-                                                min={customStartDate}
-                                                className="w-full px-4 py-3 bg-white border-2 border-purple-300 rounded-xl text-sm font-medium text-gray-800 focus:border-purple-500 focus:outline-none"
-                                            />
-                                        </div>
-                                    </div>
-                                    {customDays > 0 && (
-                                        <div className="bg-white p-4 rounded-xl border-2 border-purple-400">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-bold text-gray-700">Access Duration:</span>
-                                                <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                                    {customDays} {customDays === 1 ? 'Day' : 'Days'}
-                                                </span>
-                                            </div>
-                                            <p className="text-xs text-gray-600 mt-2">
-                                                From: {new Date(customStartDate).toLocaleDateString()} to {new Date(customEndDate).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Share Link Info */}
-                            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-2xl border-2 border-gray-300">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <span className="text-xl">
-                                        {shareOption === 'one-time' ? '🔒' :
-                                            shareOption === '24-hours' ? '⏰' :
-                                                shareOption === 'custom' ? '📅' : '♾️'}
-                                    </span>
-                                    <p className="font-bold text-gray-800">
-                                        {shareOption === 'one-time' ? 'One-Time Access Link' :
-                                            shareOption === '24-hours' ? '24-Hour Access Link' :
-                                                shareOption === 'custom' ? `Custom Access Link (${customDays} ${customDays === 1 ? 'Day' : 'Days'})` : 'Permanent Access Link'}
-                                    </p>
-                                </div>
-                                <div className="mb-4">
-                                    <label className="block text-xs font-semibold text-gray-600 mb-2">IPFS CID:</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={shareModal.cid}
-                                            readOnly
-                                            className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 rounded-xl text-sm font-mono text-gray-800"
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                const accessType = shareOption === 'one-time' ? 'One-Time' :
-                                                    shareOption === '24-hours' ? '24 Hours' :
-                                                        shareOption === 'custom' ? `${customDays} Days (${customStartDate} to ${customEndDate})` :
-                                                            'Permanent';
-                                                const shareText = `${shareModal.cid}\nAccess Type: ${accessType}`;
-                                                navigator.clipboard.writeText(shareText);
-                                                alert('CID copied to clipboard!');
-                                            }}
-                                            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-bold transition-all"
-                                        >
-                                            📋 Copy
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* View Link - Secure Token Method */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 mb-2">
-                                        🔒 Secure Share Link (Recommended):
-                                    </label>
-
-                                    {generatedShareLink ? (
-                                        // Show generated link
-                                        <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-400 rounded-xl">
-                                            <p className="text-sm font-semibold text-green-800 mb-3">✅ Share Link Generated!</p>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-green-700 mb-1">Secure Token URL:</label>
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={generatedShareLink}
-                                                            readOnly
-                                                            className="flex-1 px-3 py-2 bg-white border-2 border-green-300 rounded-lg text-xs font-mono text-gray-800 break-all"
-                                                        />
-                                                        <button
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(generatedShareLink);
-                                                                alert('✅ Share link copied to clipboard!');
-                                                            }}
-                                                            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg font-bold transition-all whitespace-nowrap"
-                                                        >
-                                                            📋 Copy
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => window.open(generatedShareLink, '_blank')}
-                                                        className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:shadow-lg font-bold transition-all"
-                                                    >
-                                                        🔗 Open Link
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setGeneratedShareLink('')}
-                                                        className="px-4 py-2 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg hover:shadow-lg font-bold transition-all"
-                                                    >
-                                                        ✨ New Share
-                                                    </button>
-                                                </div>
-                                                <button
-                                                    onClick={() => {
-                                                        setShareModal(null);
-                                                        setShareOption('permanent');
-                                                        setShareWalletAddress('');
-                                                        setGeneratedShareLink('');
-                                                    }}
-                                                    className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg hover:shadow-lg font-bold transition-all"
-                                                >
-                                                    ✅ Done - Close Window
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        // Show instructions
-                                        <>
-                                            <p className="text-xs text-gray-500 mb-2">
-                                                Generate a secure token-based link after granting access to a wallet. This method doesn't expose encryption keys in the URL.
-                                            </p>
-                                            <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl">
-                                                <p className="text-sm font-semibold text-green-800 mb-2">✅ Best Practice:</p>
-                                                <ol className="text-xs text-green-700 space-y-1 ml-4 list-decimal">
-                                                    <li>Enter recipient's wallet address below</li>
-                                                    <li>Click "✅ Grant Access"</li>
-                                                    <li>Secure share link will be generated automatically</li>
-                                                    <li>Link is copied to clipboard - send it to recipient</li>
-                                                </ol>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Direct Share Link Section - Simplified */}
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-300">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="text-2xl">🔗</span>
-                                    <h4 className="font-bold text-gray-800 text-lg">Direct IPFS Share Link</h4>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-4">
-                                    Share this link to give anyone access to download and decrypt this file.
-                                </p>
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={() => {
-                                            // Generate simple share link with all required parameters
-                                            const params = new URLSearchParams({
-                                                cid: shareModal.cid,
-                                                key: shareModal.encryptionKey,
-                                                iv: JSON.stringify(shareModal.iv) // Convert IV array to JSON string
-                                            });
-                                            const shareUrl = `${window.location.origin}/view?${params.toString()}`;
-                                            setGeneratedShareLink(shareUrl);
-                                            navigator.clipboard.writeText(shareUrl);
-                                            alert('✅ Share link copied to clipboard!\n\n🔗 Link: ' + shareUrl + '\n\nAnyone with this link can download and decrypt the file.');
-                                        }}
-                                        className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-bold transition-all"
-                                    >
-                                        📋 Generate & Copy Share Link
-                                    </button>
-                                    {generatedShareLink && (
-                                        <div className="p-3 bg-white border-2 border-green-300 rounded-xl">
-                                            <p className="text-xs text-gray-600 mb-2">Share Link:</p>
-                                            <p className="text-xs font-mono text-gray-800 break-all">{generatedShareLink}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>                            {/* Warning Message */}
-                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
-                                <div className="flex items-start gap-3">
-                                    <span className="text-xl">ℹ️</span>
-                                    <div className="text-sm text-blue-800">
+                            {/* Security Warning */}
+                            <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg sm:rounded-xl">
+                                <div className="flex items-start gap-2 sm:gap-3">
+                                    <span className="text-lg sm:text-xl">ℹ️</span>
+                                    <div className="text-xs sm:text-sm text-blue-800">
                                         <p className="font-bold mb-1">Security Note:</p>
                                         <p>Anyone with the share link can access this file. Keep it secure!</p>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* Close Button */}
                             <div className="pt-2">
                                 <button
                                     onClick={() => {
                                         setShareModal(null);
                                         setShareOption('permanent');
-                                        setCustomStartDate('');
-                                        setCustomEndDate('');
-                                        setCustomDays(0);
                                         setShareWalletAddress('');
                                         setGeneratedShareLink('');
                                     }}
-                                    className="w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+                                    className="w-full py-3 sm:py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg sm:rounded-2xl font-bold hover:shadow-xl transition-all text-sm sm:text-base"
                                 >
                                     Close
                                 </button>
@@ -953,8 +708,9 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                         </div>
                     </div>
                 </div>
-            )
-            }
+            )}
+
+
 
             {/* AI Extraction Modal */}
             {
