@@ -289,73 +289,20 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         }
 
         try {
-            const tokenLib = await import('@/lib/sharing/access-tokens');
-            let shareLink: string;
-            let tokenInfo: string = '';
-
-            // Determine share type and create appropriate token
-            if (shareOption === 'permanent') {
-                // Old simple share method (key in URL)
-                const shareLib = await import('@/lib/sharing/simple-share');
-                shareLink = shareLib.generateShareLink(
-                    shareModal.cid,
-                    shareModal.encryptionKey,
-                    shareModal.iv,
-                    shareModal.fileName,
-                    shareModal.fileType
-                );
-                tokenInfo = '♾️ Type: Permanent Access\n⚠️ This link never expires and can be used unlimited times.';
-
-            } else {
-                // Create access token for time-limited sharing
-                const tokenOptions: any = {};
-
-                if (shareOption === 'custom' && customStartDate && customEndDate) {
-                    tokenOptions.validFrom = new Date(customStartDate).getTime();
-                    tokenOptions.validUntil = new Date(customEndDate).getTime();
-                } else if (shareOption === 'custom' && customDays > 0) {
-                    tokenOptions.customDays = customDays;
-                }
-
-                const token = tokenLib.createAccessToken(
-                    shareModal.cid,
-                    shareModal.encryptionKey,
-                    shareModal.iv,
-                    shareModal.fileName,
-                    shareModal.fileType,
-                    shareOption,
-                    account.address,
-                    tokenOptions
-                );
-
-                // Store token
-                tokenLib.storeAccessToken(token);
-
-                // Generate link with token
-                shareLink = tokenLib.generateTokenLink(token.tokenId);
-
-                // Create token info string
-                switch (shareOption) {
-                    case 'one-time':
-                        tokenInfo = '🔒 Type: One-Time Access\n✓ Link expires after first view\n✓ Maximum security';
-                        break;
-                    case '24-hours':
-                        const expiry24h = new Date(token.expiresAt!).toLocaleString();
-                        tokenInfo = `⏰ Type: 24-Hour Access\n✓ Expires: ${expiry24h}\n✓ Unlimited views until expiry`;
-                        break;
-                    case 'custom':
-                        const validFrom = token.validFrom ? new Date(token.validFrom).toLocaleString() : 'Now';
-                        const validUntil = token.validUntil ? new Date(token.validUntil).toLocaleString() : 'Never';
-                        tokenInfo = `📅 Type: Custom Date Range\n✓ Valid from: ${validFrom}\n✓ Valid until: ${validUntil}`;
-                        break;
-                }
-            }
+            // Simple permanent share method (key in URL)
+            const shareLib = await import('@/lib/sharing/simple-share');
+            const shareLink = shareLib.generateShareLink(
+                shareModal.cid,
+                shareModal.encryptionKey,
+                shareModal.iv,
+                shareModal.fileName,
+                shareModal.fileType
+            );
 
             // Set the generated share link to display in UI
             setGeneratedShareLink(shareLink);
 
             // Copy share link to clipboard
-            const shareLib = await import('@/lib/sharing/simple-share');
             const copied = await shareLib.copyShareLink(shareLink);
 
             // Log share event
@@ -367,7 +314,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             );
 
             // Success message
-            alert(`✅ Share Link Generated!\n\n📄 File: ${shareModal.fileName}\n${tokenInfo}\n\n🔗 Share Link:\n${shareLink}\n\n${copied ? '📋 Link copied to clipboard!' : 'Please copy the link manually'}\n\n💡 Share this link securely with authorized recipients.`);
+            alert(`✅ Share Link Generated!\n\n📄 File: ${shareModal.fileName}\n\n🔗 Share Link:\n${shareLink}\n\n${copied ? '📋 Link copied to clipboard!' : 'Please copy the link manually'}\n\n💡 Share this link securely with authorized recipients.`);
 
             console.log('📤 Share link generated successfully');
             console.log('   Type:', shareOption);
@@ -649,9 +596,76 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                 ×
                             </button>
                         </div>                        <div className="space-y-6">
-                            {/* Share Options */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-3">Select Share Type:</label>
+                            {/* Simplified Share UI */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-300">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-3xl">🔗</span>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-gray-800">Share File</h4>
+                                        <p className="text-sm text-gray-600">Generate a secure link to share this file</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-600 mb-2">File CID:</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={shareModal.cid}
+                                                readOnly
+                                                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 rounded-xl text-sm font-mono text-gray-800"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {generatedShareLink ? (
+                                        <div className="p-4 bg-white rounded-xl border-2 border-green-400">
+                                            <p className="text-sm font-semibold text-green-800 mb-3">✅ Share Link Generated!</p>
+                                            <div className="flex gap-2 mb-3">
+                                                <input
+                                                    type="text"
+                                                    value={generatedShareLink}
+                                                    readOnly
+                                                    className="flex-1 px-3 py-2 bg-gray-50 border-2 border-green-300 rounded-lg text-xs font-mono text-gray-800"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(generatedShareLink);
+                                                        alert('✅ Link copied!');
+                                                    }}
+                                                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold"
+                                                >
+                                                    📋 Copy
+                                                </button>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => window.open(generatedShareLink, '_blank')}
+                                                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold"
+                                                >
+                                                    🔗 Open Link
+                                                </button>
+                                                <button
+                                                    onClick={() => setShareModal(null)}
+                                                    className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-bold"
+                                                >
+                                                    ✅ Done
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={handleGrantAccess}
+                                            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                                        >
+                                            🔗 Generate Share Link
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="hidden">
+                                <label className="block text-sm font-bold text-gray-700 mb-3">OLD UI HIDDEN:</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => setShareOption('one-time')}

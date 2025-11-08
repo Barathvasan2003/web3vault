@@ -250,130 +250,22 @@ export default function Dashboard({ account, blockchainConnected }: DashboardPro
                     </div>
                 </div>
 
-                {/* Cloud Backup Section */}
+                {/* Simple Info Card - Blockchain Backup */}
                 <div className="mb-8 bg-gradient-to-br from-cyan-50 to-blue-50 backdrop-blur-xl rounded-3xl p-6 border-2 border-cyan-200 shadow-xl animate-slide-up">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex items-center space-x-4 mb-4 lg:mb-0">
-                            <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-cyan-900 mb-1">☁️ Cloud Key Backup (IPFS)</h3>
-                                <p className="text-sm text-cyan-700">
-                                    {cloudBackupCID
-                                        ? '✅ Keys backed up to IPFS - Access from any browser!'
-                                        : 'Backup your keys to IPFS - Login from any device'}
-                                </p>
-                                {cloudBackupCID && (
-                                    <p className="text-xs text-cyan-600 font-mono mt-1">
-                                        CID: {cloudBackupCID.slice(0, 20)}...
-                                    </p>
-                                )}
-                            </div>
+                    <div className="flex items-center space-x-4">
+                        <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <button
-                                onClick={() => setShowCloudBackup(!showCloudBackup)}
-                                className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                <span>{cloudBackupCID ? 'Update Backup' : 'Backup to Cloud'}</span>
-                            </button>
-                            {!cloudBackupCID && (
-                                <button
-                                    onClick={() => { setShowCloudBackup(true); }}
-                                    className="flex items-center space-x-2 px-5 py-3 bg-white border-2 border-cyan-300 text-cyan-700 rounded-xl font-bold shadow-md hover:shadow-lg hover:scale-105 transition-all"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3v-5" />
-                                    </svg>
-                                    <span>Restore from Cloud</span>
-                                </button>
-                            )}
+                        <div>
+                            <h3 className="text-xl font-bold text-cyan-900 mb-1">⛓️ Blockchain Backup Active</h3>
+                            <p className="text-sm text-cyan-700">
+                                Your files are backed up on Polkadot blockchain. Access from any device with your wallet!
+                            </p>
                         </div>
                     </div>
 
-                    {/* Cloud Backup Modal */}
-                    {showCloudBackup && (
-                        <div className="mt-6 p-6 bg-white/90 rounded-2xl border-2 border-cyan-100 animate-slide-up">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {/* Backup Section */}
-                                <div className="space-y-4">
-                                    <h4 className="text-lg font-bold text-cyan-900 flex items-center">
-                                        <svg className="w-5 h-5 mr-2 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                        </svg>
-                                        Backup to IPFS
-                                    </h4>
-                                    <p className="text-sm text-gray-600">
-                                        Create an encrypted backup of your keys on IPFS. Use a strong password!
-                                    </p>
-                                    <input
-                                        type="password"
-                                        value={backupPassword}
-                                        onChange={(e) => setBackupPassword(e.target.value)}
-                                        placeholder="Enter backup password (min 8 chars)"
-                                        className="w-full px-4 py-3 border-2 border-cyan-200 rounded-xl focus:border-cyan-500 focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={handleCloudBackup}
-                                        disabled={uploading || !backupPassword}
-                                        className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                    >
-                                        {uploading ? '⏳ Uploading to IPFS...' : '☁️ Backup Now'}
-                                    </button>
-                                </div>
-
-                                {/* Restore Section */}
-                                <div className="space-y-4">
-                                    <h4 className="text-lg font-bold text-cyan-900 flex items-center">
-                                        <svg className="w-5 h-5 mr-2 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3v-5" />
-                                        </svg>
-                                        Restore from IPFS
-                                    </h4>
-                                    <p className="text-sm text-gray-600">
-                                        Enter your backup password and CID to restore keys from any device.
-                                    </p>
-                                    <input
-                                        type="password"
-                                        value={restorePassword}
-                                        onChange={(e) => setRestorePassword(e.target.value)}
-                                        placeholder="Enter backup password"
-                                        className="w-full px-4 py-3 border-2 border-cyan-200 rounded-xl focus:border-cyan-500 focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={handleCloudRestore}
-                                        disabled={uploading || !restorePassword}
-                                        className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                    >
-                                        {uploading ? '⏳ Restoring...' : '📥 Restore Keys'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Info Box */}
-                            <div className="mt-6 p-4 bg-cyan-50 rounded-xl border-2 border-cyan-200">
-                                <h5 className="text-sm font-bold text-cyan-900 mb-2 flex items-center">
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    How It Works
-                                </h5>
-                                <ul className="text-xs text-cyan-800 space-y-1">
-                                    <li>✅ Your keys are encrypted with YOUR password before upload</li>
-                                    <li>✅ Encrypted backup stored on IPFS (decentralized network)</li>
-                                    <li>✅ Access from ANY browser using CID + password</li>
-                                    <li>✅ No one can decrypt without your password (not even us!)</li>
-                                    <li>⚠️ Remember your password - it CANNOT be recovered!</li>
-                                </ul>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Stats Cards */}
