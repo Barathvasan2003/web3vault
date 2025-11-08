@@ -180,8 +180,14 @@ export default function FileUpload({ account, blockchainConnected, onUploadSucce
             console.log('   1. ✅ File encrypted (AES-256-GCM)');
             console.log('   2. ✅ Uploaded to IPFS (Pinata)');
             console.log('   3. ✅ Metadata on blockchain (Polkadot)');
-            console.log('   4. ✅ Accessible from any device!');            // Reset
+            console.log('   4. ✅ Accessible from any device!');
+
+            // Reset component state completely to prevent old cache
             setSelectedFile(null);
+            setAiData(null);
+            setError(null);
+            setStatus('');
+            setProgress(0);
             if (fileInputRef.current) fileInputRef.current.value = '';
 
             setTimeout(() => {

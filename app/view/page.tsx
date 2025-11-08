@@ -349,14 +349,32 @@ export default function ViewFilePage() {
 
             console.log('✅ Encrypted file downloaded from IPFS');
 
+            // If fileName or fileType is missing, try to fetch from Pinata metadata
+            let resolvedFileName = fileName;
+            let resolvedFileType = fileType;
+
+            if (!resolvedFileName || !resolvedFileType) {
+                console.log('🔍 Fetching metadata from Pinata...');
+                try {
+                    const metadata = await ipfsLib.getFileMetadataFromPinata(cid);
+                    if (metadata) {
+                        resolvedFileName = resolvedFileName || metadata.fileName;
+                        resolvedFileType = resolvedFileType || metadata.fileType;
+                        console.log('✅ Retrieved metadata from Pinata:', metadata);
+                    }
+                } catch (metaError) {
+                    console.warn('⚠️ Could not fetch metadata from Pinata:', metaError);
+                }
+            }
+
             // Convert ArrayBuffer to base64 for compatibility with existing decrypt functions
             const encryptionLib = await import('@/lib/encryption/medical-encryption');
             const encryptedBase64 = encryptionLib.arrayBufferToBase64(encryptedArrayBuffer);
 
             // Determine proper file type and name
             // If fileType is missing but fileName has extension, derive MIME type from it
-            const baseName = fileName || 'shared_medical_file';
-            const detectedFileType = fileType || (baseName.includes('.') ? getMimeTypeFromExtension(baseName) : 'application/octet-stream');
+            const baseName = resolvedFileName || 'shared_medical_file';
+            const detectedFileType = resolvedFileType || (baseName.includes('.') ? getMimeTypeFromExtension(baseName) : 'application/octet-stream');
             const properFileName = ensureFileExtension(
                 baseName,
                 detectedFileType

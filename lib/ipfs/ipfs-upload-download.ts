@@ -250,6 +250,43 @@ export async function downloadMetadataFromIPFS(cid: string): Promise<any> {
 }
 
 /**
+ * Get file metadata from Pinata by CID
+ */
+export async function getFileMetadataFromPinata(cid: string): Promise<{ fileName: string; fileType: string } | null> {
+    try {
+        if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
+            return null;
+        }
+
+        const response = await fetch(`https://api.pinata.cloud/data/pinList?hashContains=${cid}&status=pinned`, {
+            headers: {
+                'pinata_api_key': PINATA_API_KEY,
+                'pinata_secret_api_key': PINATA_SECRET_KEY,
+            },
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const result = await response.json();
+        const fileData = result.rows?.[0];
+
+        if (fileData && fileData.metadata) {
+            return {
+                fileName: fileData.metadata.name || 'unknown',
+                fileType: fileData.metadata.keyvalues?.fileType || 'application/octet-stream',
+            };
+        }
+
+        return null;
+    } catch (error) {
+        console.error('❌ Failed to get file metadata from Pinata:', error);
+        return null;
+    }
+}
+
+/**
  * Get pinned files list from Pinata (for user's files)
  */
 export async function getPinnedFiles(): Promise<any[]> {
