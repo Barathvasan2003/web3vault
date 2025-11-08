@@ -216,9 +216,11 @@ export default function ViewFilePage() {
 
         try {
             // Determine proper file type and name with extension
-            const detectedFileType = fileType || 'application/octet-stream';
+            // If fileType is missing but fileName has extension, derive MIME type from it
+            const baseName = fileName || 'shared_file';
+            const detectedFileType = fileType || (baseName.includes('.') ? getMimeTypeFromExtension(baseName) : 'application/octet-stream');
             const properFileName = ensureFileExtension(
-                fileName || 'shared_file',
+                baseName,
                 detectedFileType
             );
 
@@ -352,9 +354,11 @@ export default function ViewFilePage() {
             const encryptedBase64 = encryptionLib.arrayBufferToBase64(encryptedArrayBuffer);
 
             // Determine proper file type and name
-            const detectedFileType = fileType || 'application/octet-stream';
+            // If fileType is missing but fileName has extension, derive MIME type from it
+            const baseName = fileName || 'shared_medical_file';
+            const detectedFileType = fileType || (baseName.includes('.') ? getMimeTypeFromExtension(baseName) : 'application/octet-stream');
             const properFileName = ensureFileExtension(
-                fileName || 'shared_medical_file',
+                baseName,
                 detectedFileType
             );
 
@@ -448,9 +452,11 @@ export default function ViewFilePage() {
             }
 
             // Determine proper file type and name with extension
-            const detectedFileType = fileType || 'application/octet-stream';
+            // If fileType is missing but fileName has extension, derive MIME type from it
+            const baseName = fileName || `shared_file_${cid.slice(0, 8)}`;
+            const detectedFileType = fileType || (baseName.includes('.') ? getMimeTypeFromExtension(baseName) : 'application/octet-stream');
             const properFileName = ensureFileExtension(
-                fileName || `shared_file_${cid.slice(0, 8)}`,
+                baseName,
                 detectedFileType
             );
 
@@ -589,6 +595,27 @@ export default function ViewFilePage() {
             bytes[i] = binaryString.charCodeAt(i);
         }
         return bytes.buffer;
+    };
+
+    /**
+     * Get MIME type from file extension
+     */
+    const getMimeTypeFromExtension = (fileName: string): string => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        const extToMime: { [key: string]: string } = {
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml',
+            'pdf': 'application/pdf',
+            'txt': 'text/plain',
+            'json': 'application/json',
+            'xml': 'application/xml',
+            'zip': 'application/zip',
+        };
+        return extToMime[ext || ''] || 'application/octet-stream';
     };
 
     /**
