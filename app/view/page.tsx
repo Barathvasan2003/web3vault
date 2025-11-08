@@ -22,6 +22,7 @@ export default function ViewFilePage() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const tokenParam = urlParams.get('token');
+        const tokenDataParam = urlParams.get('data'); // NEW: Embedded token data
         const cidParam = urlParams.get('cid');
         const metaParam = urlParams.get('meta'); // Share metadata CID
         const keyParam = urlParams.get('key');
@@ -30,8 +31,15 @@ export default function ViewFilePage() {
         const fileNameParam = urlParams.get('fileName');
         const fileTypeParam = urlParams.get('fileType');
 
+        // NEW: Check for token with embedded data (secure cross-device sharing)
+        if (tokenParam && tokenDataParam && !cidParam) {
+            // This is a secure token link with embedded encryption data
+            setToken(tokenParam);
+            sessionStorage.setItem('tokenData', tokenDataParam);
+            setAutoLoading(true);
+        }
         // Check if we have decentralized IPFS share (token + cid + meta)
-        if (tokenParam && cidParam && metaParam) {
+        else if (tokenParam && cidParam && metaParam) {
             // This is a decentralized share link - all data on IPFS
             setToken(tokenParam);
             setCid(cidParam);
@@ -62,7 +70,7 @@ export default function ViewFilePage() {
             if (fileTypeParam) setFileType(fileTypeParam);
             setAutoLoading(true);
         } else if (tokenParam) {
-            // Token-only URL (will try localStorage)
+            // Token-only URL (will try localStorage - may not work cross-device)
             setToken(tokenParam);
             setAutoLoading(true);
         } else {
@@ -96,15 +104,20 @@ export default function ViewFilePage() {
         if (autoLoading) {
             setAutoLoading(false);
             const metadataCID = sessionStorage.getItem('metadataCID');
+            const tokenData = sessionStorage.getItem('tokenData');
 
-            if (token && cid && metadataCID) {
+            // NEW: Check for embedded token data first (secure cross-device)
+            if (token && tokenData && !cid) {
+                loadFileFromEmbeddedToken(tokenData);
+            }
+            else if (token && cid && metadataCID) {
                 // Decentralized IPFS share (all data on IPFS)
                 loadFileFromIPFS();
             } else if (token && cid && encryptionKey && iv.length > 0 && encryptedData) {
                 // Token-based URL with embedded data (works across browsers)
                 loadFileFromEmbeddedData();
             } else if (token) {
-                // Token-only URL (requires localStorage)
+                // Token-only URL (requires localStorage - may fail cross-device)
                 loadFileFromToken();
             } else if (cid && encryptionKey && iv.length > 0) {
                 // Simple share link: cid + key + iv (fetch from IPFS)
@@ -188,6 +201,87 @@ export default function ViewFilePage() {
         } catch (err: any) {
             setError(err.message);
             console.error('Token load error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // NEW: Load file from embedded token data (works cross-device!)
+    const loadFileFromEmbeddedToken = async (tokenDataBase64: string) => {
+        if (!token || !tokenDataBase64) {
+            setError('No token data provided');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setFileData(null);
+        setDecryptedPreview(null);
+
+        try {
+            // Decode token from URL
+            const tokenLib = await import('@/lib/sharing/access-tokens');
+            const accessToken = tokenLib.decodeTokenFromUrl(token, tokenDataBase64);
+
+            if (!accessToken) {
+                throw new Error('🔒 Invalid or corrupted token data.\n\nThe share link may be incomplete or damaged.');
+            }
+
+            // Validate access token
+            const validation = tokenLib.validateAccessToken(accessToken);
+            if (!validation.valid) {
+                throw new Error(`🔒 Access Denied: ${validation.reason}\n\n${tokenLib.getTokenInfo(accessToken)}`);
+            }
+
+            // Store token locally for tracking (optional)
+            tokenLib.storeAccessToken(accessToken);
+
+            // Increment view count (will burn token if one-time access)
+            tokenLib.incrementViewCount(token);
+
+            // Download encrypted file from IPFS
+            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
+            console.log('📥 Downloading file from IPFS:', accessToken.cid);
+
+            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(accessToken.cid);
+
+            // Convert ArrayBuffer to base64 string for decryption
+            const uint8Array = new Uint8Array(encryptedArrayBuffer);
+            const binaryString = Array.from(uint8Array).map(byte => String.fromCharCode(byte)).join('');
+            const encryptedDataB64 = btoa(binaryString);
+
+            // Create file object with token data
+            const file = {
+                cid: accessToken.cid,
+                fileName: accessToken.fileName,
+                fileType: accessToken.fileType,
+                fileSize: 0,
+                encryptionKey: accessToken.encryptionKey,
+                iv: accessToken.iv,
+                uploadDate: accessToken.createdAt,
+                shareType: accessToken.shareType,
+                viewCount: accessToken.viewCount + 1, // Show updated count
+                expiresAt: accessToken.expiresAt
+            };
+
+            setFileData(file);
+
+            // Try to decrypt and preview
+            await loadPreview(file, encryptedDataB64);
+
+            const shareTypeEmoji = accessToken.shareType === 'one-time' ? '🔒' :
+                accessToken.shareType === '24-hours' ? '⏰' :
+                    accessToken.shareType === 'custom' ? '📅' : '♾️';
+
+            console.log(`✅ File loaded via embedded token (works cross-device!)`);
+            console.log(`   ${shareTypeEmoji} Type: ${accessToken.shareType}`);
+            console.log(`   👁️ Views: ${file.viewCount}`);
+            console.log(`   📅 Expires: ${accessToken.expiresAt || 'Never'}`);
+            console.log(`   🌍 Cross-device: YES - encryption keys embedded in URL`);
+
+        } catch (err: any) {
+            setError(err.message);
+            console.error('Embedded token load error:', err);
         } finally {
             setLoading(false);
         }

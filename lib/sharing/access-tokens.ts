@@ -217,11 +217,65 @@ export function revokeAccessToken(tokenId: string): boolean {
 }
 
 /**
- * Generate a shareable URL with token
+ * Generate a shareable URL with token (local storage only - doesn't work cross-device)
  */
 export function generateTokenUrl(tokenId: string): string {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     return `${baseUrl}/view?token=${tokenId}`;
+}
+
+/**
+ * Generate a shareable URL with embedded token data (works cross-device!)
+ * Encodes the full token as base64 in URL so recipient can decrypt without localStorage
+ */
+export function generateShareableTokenUrl(token: AccessToken): string {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+    // Create a shareable token object (includes encryption keys)
+    const shareableToken = {
+        tokenId: token.tokenId,
+        cid: token.cid,
+        encryptionKey: token.encryptionKey,
+        iv: token.iv,
+        fileName: token.fileName,
+        fileType: token.fileType,
+        shareType: token.shareType,
+        expiresAt: token.expiresAt,
+        maxViews: token.maxViews,
+        createdAt: token.createdAt,
+        customStartDate: token.customStartDate,
+        customEndDate: token.customEndDate
+    };
+
+    // Encode as base64
+    const tokenData = JSON.stringify(shareableToken);
+    const base64Token = btoa(encodeURIComponent(tokenData));
+
+    // Create URL with token ID and embedded data
+    return `${baseUrl}/view?token=${token.tokenId}&data=${base64Token}`;
+}
+
+/**
+ * Decode token data from URL
+ */
+export function decodeTokenFromUrl(tokenId: string, base64Data: string): AccessToken | null {
+    try {
+        const tokenData = decodeURIComponent(atob(base64Data));
+        const shareableToken = JSON.parse(tokenData);
+
+        // Reconstruct full AccessToken (add missing fields)
+        const token: AccessToken = {
+            ...shareableToken,
+            viewCount: 0, // Will be tracked when they access
+            isActive: true,
+            ownerAddress: 'unknown' // Not needed for viewing
+        };
+
+        return token;
+    } catch (error) {
+        console.error('Error decoding token from URL:', error);
+        return null;
+    }
 }
 
 /**

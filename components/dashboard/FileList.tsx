@@ -305,11 +305,11 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 customEndDate
             );
 
-            // Store token
+            // Store token locally (for owner's reference)
             tokenLib.storeAccessToken(token);
 
-            // Generate short URL with token ID only
-            const shareLink = tokenLib.generateTokenUrl(token.tokenId);
+            // Generate shareable URL with token data embedded (works across devices!)
+            const shareLink = tokenLib.generateShareableTokenUrl(token);
 
             // Set the generated share link to display in UI
             setGeneratedShareLink(shareLink);
