@@ -329,18 +329,27 @@ export default function ViewFilePage() {
             console.log('Key available:', !!encryptionKey);
             console.log('IV available:', iv.length > 0);
 
-            // Download encrypted file from IPFS
+            // Download encrypted file from IPFS (returns base64)
             const ipfsClient = await import('@/lib/ipfs/ipfs-client');
-            const encryptedFileData = await ipfsClient.downloadFile(cid);
+            const base64EncryptedData = await ipfsClient.downloadFile(cid);
 
             console.log('✅ Encrypted file downloaded from IPFS');
+            console.log('📦 Data length:', base64EncryptedData.length);
+
+            // Store in localStorage for decrypt/download
+            try {
+                localStorage.setItem(`encrypted_${cid}`, base64EncryptedData);
+                console.log('💾 Cached encrypted data in localStorage');
+            } catch (e) {
+                console.warn('Could not cache:', e);
+            }
 
             // Create file object
             const file = {
                 cid: cid,
                 fileName: fileName || 'shared_medical_file',
                 fileType: fileType || 'application/octet-stream',
-                fileSize: encryptedFileData.length,
+                fileSize: base64EncryptedData.length,
                 encryptionKey: encryptionKey,
                 iv: iv,
                 uploadDate: new Date().toISOString(),
@@ -349,8 +358,8 @@ export default function ViewFilePage() {
 
             setFileData(file);
 
-            // Decrypt and preview
-            await loadPreview(file, encryptedFileData);
+            // Decrypt and preview (pass base64 data)
+            await loadPreview(file, base64EncryptedData);
 
             console.log(`✅ File loaded and decrypted from IPFS`);
 

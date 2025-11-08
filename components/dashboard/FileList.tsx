@@ -128,12 +128,18 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         }
     };
 
-    const handleDelete = (cid: string) => {
-        if (!confirm('Delete this file? It will be removed from your local list only.')) return;
+    const handleDelete = async (cid: string) => {
+        if (!confirm('Delete this file? It will be removed from your records.')) return;
 
+        // Remove from file registry
+        const fileRegistry = await import('@/lib/storage/file-registry');
+        fileRegistry.removeFile(account.address, cid);
+
+        // Remove from local state
         const updatedFiles = files.filter(f => f.cid !== cid);
-        localStorage.setItem(`files_${account.address}`, JSON.stringify(updatedFiles));
         setFiles(updatedFiles);
+
+        console.log('🗑️ File deleted from registry:', cid);
     };
 
     const loadImagePreview = async (file: any) => {
