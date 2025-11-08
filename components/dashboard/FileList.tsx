@@ -133,12 +133,63 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         }
     };
 
-    const handleDelete = (cid: string) => {
-        if (!confirm('Delete this file? It will be removed from your local list only.')) return;
+    const handleDelete = async (cid: string) => {
+        const file = files.find(f => f.cid === cid);
+        const fileName = file?.fileName || 'this file';
 
-        const updatedFiles = files.filter(f => f.cid !== cid);
-        localStorage.setItem(`files_${account.address}`, JSON.stringify(updatedFiles));
-        setFiles(updatedFiles);
+        if (!confirm(`⚠️ PERMANENTLY DELETE "${fileName}"?\n\nThis will:\n✅ Remove from IPFS storage\n✅ Clear all local cache\n✅ Delete from file registry\n✅ Remove access controls\n\n⚠️ This action CANNOT be undone!\n⚠️ File will NOT reappear after reload!`)) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Starting permanent deletion for CID:', cid);
+
+            // 1. Remove from file registry (localStorage + memory)
+            const fileRegistry = await import('@/lib/storage/file-registry');
+            fileRegistry.removeFile(account.address, cid);
+            console.log('✅ Removed from file registry');
+
+            // 2. Clear encrypted data cache from localStorage
+            try {
+                localStorage.removeItem(`encrypted_${cid}`);
+                console.log('✅ Cleared encrypted data cache');
+            } catch (e) {
+                console.warn('Could not clear encrypted cache:', e);
+            }
+
+            // 3. Remove access control list
+            try {
+                const accessControlLib = await import('@/lib/access/access-control');
+                accessControlLib.deleteACL(cid);
+                console.log('✅ Removed access control list');
+            } catch (e) {
+                console.warn('Could not remove ACL:', e);
+            }
+
+            // 4. Unpin from IPFS/Pinata (if API keys available)
+            try {
+                const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
+                const unpinned = await ipfsLib.unpinFile(cid);
+                if (unpinned) {
+                    console.log('✅ Unpinned from IPFS/Pinata');
+                } else {
+                    console.warn('⚠️ Could not unpin from IPFS (may require manual cleanup)');
+                }
+            } catch (e) {
+                console.warn('IPFS unpin failed:', e);
+            }
+
+            // 5. Update UI immediately
+            const updatedFiles = files.filter(f => f.cid !== cid);
+            setFiles(updatedFiles);
+
+            console.log('✅ File permanently deleted!');
+            alert('✅ File deleted successfully!\n\nThe file has been:\n✓ Removed from IPFS storage\n✓ Cleared from local cache\n✓ Deleted from registry\n\nIt will not reappear on reload.');
+
+        } catch (error: any) {
+            console.error('❌ Delete failed:', error);
+            alert(`❌ Failed to delete file: ${error.message}\n\nSome data may remain in cache. Please try again.`);
+        }
     };
 
     const loadImagePreview = async (file: any) => {

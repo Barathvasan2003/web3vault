@@ -234,3 +234,15 @@ export function cleanupExpiredAccess(acl: FileAccessControl): FileAccessControl 
         ),
     };
 }
+
+/**
+ * Delete entire ACL for a file (used when deleting file)
+ */
+export function deleteACL(cid: string): void {
+    try {
+        localStorage.removeItem(`acl_${cid}`);
+        console.log(`🗑️ Deleted ACL for CID: ${cid}`);
+    } catch (e) {
+        console.warn('Failed to delete ACL from localStorage:', e);
+    }
+}
