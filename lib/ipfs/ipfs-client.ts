@@ -609,6 +609,8 @@ export async function uploadFile(file: File | Blob, fileName?: string): Promise<
  * Returns raw data as string
  */
 export async function downloadFile(cid: string): Promise<string> {
+    console.log('📥 Downloading file from IPFS, CID:', cid);
+
     const client = getIPFSClient();
 
     if (client) {
@@ -620,13 +622,14 @@ export async function downloadFile(cid: string): Promise<string> {
                 chunks.push(chunk);
             }
 
-            // Combine chunks and convert to string
+            // Combine chunks and convert to base64
             const fullData = Buffer.concat(chunks);
-            const dataString = fullData.toString('utf-8');
+            const binaryString = Array.from(fullData).map(byte => String.fromCharCode(byte)).join('');
+            const base64Data = btoa(binaryString);
 
             console.log('✅ File downloaded from IPFS via client:', cid);
 
-            return dataString;
+            return base64Data;
         } catch (error) {
             console.warn('⚠️ IPFS client download failed, trying gateway...', error);
         }
@@ -701,21 +704,40 @@ export async function downloadFileFromGateway(cid: string, gatewayIndex: number 
         const gateway = IPFS_GATEWAYS[gatewayIndex];
         const url = `${gateway}${cid}`;
 
-        console.log(`Trying gateway ${gatewayIndex + 1}:`, gateway);
+        console.log(`🌐 Trying gateway ${gatewayIndex + 1}/${IPFS_GATEWAYS.length}:`, gateway);
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*',
+            }
+        });
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const text = await response.text();
+        // Get binary data as ArrayBuffer
+        const arrayBuffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
 
-        console.log('✅ File downloaded via gateway:', gateway);
+        // Convert to base64 string for consistency with upload format
+        const binaryString = Array.from(uint8Array).map(byte => String.fromCharCode(byte)).join('');
+        const base64Data = btoa(binaryString);
 
-        return text;
+        console.log(`✅ File downloaded via gateway ${gatewayIndex + 1}:`, gateway);
+        console.log(`📦 Downloaded ${uint8Array.length} bytes`);
+
+        // Cache in localStorage for faster future access
+        try {
+            localStorage.setItem(`ipfs_${cid}`, base64Data);
+        } catch (e) {
+            console.warn('Could not cache in localStorage:', e);
+        }
+
+        return base64Data;
     } catch (error) {
-        console.error(`Gateway ${gatewayIndex + 1} failed:`, error);
+        console.error(`❌ Gateway ${gatewayIndex + 1} failed:`, error);
 
         // Try next gateway
         return await downloadFileFromGateway(cid, gatewayIndex + 1);
