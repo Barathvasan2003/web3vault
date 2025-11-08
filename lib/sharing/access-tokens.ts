@@ -247,20 +247,23 @@ export function generateShareableTokenUrl(token: AccessToken): string {
         customEndDate: token.customEndDate
     };
 
-    // Encode as base64
+    // Encode as base64 (simple and clean)
     const tokenData = JSON.stringify(shareableToken);
-    const base64Token = btoa(encodeURIComponent(tokenData));
+    const base64Token = btoa(tokenData);
 
     // Create URL with token ID and embedded data
-    return `${baseUrl}/view?token=${token.tokenId}&data=${base64Token}`;
+    // encodeURIComponent ensures the base64 is URL-safe
+    return `${baseUrl}/view?token=${token.tokenId}&data=${encodeURIComponent(base64Token)}`;
 }
 
 /**
  * Decode token data from URL
  */
-export function decodeTokenFromUrl(tokenId: string, base64Data: string): AccessToken | null {
+export function decodeTokenFromUrl(tokenId: string, urlEncodedBase64: string): AccessToken | null {
     try {
-        const tokenData = decodeURIComponent(atob(base64Data));
+        // First decode the URL encoding, then decode base64
+        const base64Data = decodeURIComponent(urlEncodedBase64);
+        const tokenData = atob(base64Data);
         const shareableToken = JSON.parse(tokenData);
 
         // Reconstruct full AccessToken (add missing fields)
