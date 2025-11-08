@@ -1,26 +1,41 @@
-# 🏥 Web3Vault - Decentralized Medical Records System# 🏥 WebVault3 - Decentralized Medical Vault
+# 🏥 Web3 Medical Vault - Decentralized Healthcare Records
 
+> **Your Health Data, Your Control** - Secure, Private, and Permanent Medical Records Storage  
+> Built with Next.js, IPFS, Polkadot Blockchain, and Zero-Knowledge Encryption
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-success)](https://web3vault-production.up.railway.app)
+[![Status](https://img.shields.io/badge/status-production%20ready-success)](https://web3vault-production.up.railway.app)
+[![Blockchain](https://img.shields.io/badge/blockchain-Polkadot-E6007A)](https://polkadot.network/)
+[![Storage](https://img.shields.io/badge/storage-IPFS%20Pinata-blue)](https://pinata.cloud/)
+[![AI](https://img.shields.io/badge/AI-Gemini%20Vision-purple)](https://ai.google.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.1-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Polkadot Hackathon 2025 - User-Centric Apps Category**> **Your health data, your control.** A blockchain-powered medical record vault with AI assistance.
+---
 
-> 
+## 🚀 Live Production
 
-> Empowering patients to own, control, and securely share their medical records using Polkadot blockchain and IPFS storage.![Status](https://img.shields.io/badge/status-hackathon%20ready-success)
+**App URL**: [https://web3vault-production.up.railway.app](https://web3vault-production.up.railway.app)
 
-![Blockchain](https://img.shields.io/badge/blockchain-Polkadot-E6007A)
+**Try it now:**
+1. Install [Polkadot.js Extension](https://polkadot.js.org/extension/)
+2. Visit the live app
+3. Connect your wallet
+4. Upload and encrypt your first medical file!
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)![Storage](https://img.shields.io/badge/storage-IPFS%20%2B%20Crust-blue)
+---
 
-[![Next.js](https://img.shields.io/badge/Next.js-14.1-black)](https://nextjs.org/)![AI](https://img.shields.io/badge/AI-GPT%20%2B%20OCR-purple)
+## 🎯 What We Built
 
-[![Polkadot](https://img.shields.io/badge/Polkadot-Ready-E6007A)](https://polkadot.network/)
+A **complete decentralized medical vault** where you can:
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)## 🎯 Vision
-
-
-
----Replace Google Drive and WhatsApp for medical files with a secure, patient-controlled, Web3-powered health vault that uses AI to understand your medical documents.
+✅ **Own Your Data** - Your files, your keys, your control  
+✅ **Encrypt Everything** - Military-grade AES-256-GCM encryption  
+✅ **Store Permanently** - IPFS distributed storage  
+✅ **Access Anywhere** - Blockchain-based cross-device sync  
+✅ **Share Easily** - One-click secure share links  
+✅ **AI-Powered** - Automatic prescription data extraction
 
 
 
