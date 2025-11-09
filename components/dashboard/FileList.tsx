@@ -583,11 +583,21 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 <h3 className="text-2xl font-bold mb-2 text-gray-800">
                     {sharedMode ? 'No Shared Files Yet' : 'No Records Yet'}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 mb-4">
                     {sharedMode
-                        ? 'Files shared with you will appear here'
+                        ? 'Files shared with you by family or others will appear here'
                         : 'Upload your first medical record to get started'}
                 </p>
+                {sharedMode && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-sm">
+                        <p className="font-semibold text-blue-900 mb-2">💡 How to receive shared files:</p>
+                        <ul className="list-disc list-inside space-y-1 text-blue-800 text-xs">
+                            <li><strong>Same Device:</strong> Files shared via wallet address appear here automatically</li>
+                            <li><strong>Different Device:</strong> Ask the sharer to use "Share Link" option and send you the link</li>
+                            <li><strong>Family Sharing:</strong> Share files with family wallet addresses for permanent access</li>
+                        </ul>
+                    </div>
+                )}
             </div>
         );
     }
