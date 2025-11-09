@@ -69,25 +69,53 @@
     }
 }
 
-/* Professional Custom Scrollbar */
+/* Professional Custom Scrollbar - Enhanced */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
 }
 
 ::-webkit-scrollbar-track {
     background: hsl(var(--secondary));
-    border-radius: 10px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    border-radius: 10px;
+    border-radius: 12px;
     border: 2px solid hsl(var(--secondary));
+    transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary));
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Better scrollbar for modals */
+.modal-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 100%);
+    border-radius: 10px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
 }
 
 /* Professional Gradient Text */
@@ -358,18 +386,17 @@
     0% {
         background-position: -200% 0;
     }
+
     100% {
         background-position: 200% 0;
     }
 }
 
 .skeleton {
-    background: linear-gradient(
-        90deg,
-        rgba(229, 231, 235, 1) 0%,
-        rgba(243, 244, 246, 1) 50%,
-        rgba(229, 231, 235, 1) 100%
-    );
+    background: linear-gradient(90deg,
+            rgba(229, 231, 235, 1) 0%,
+            rgba(243, 244, 246, 1) 50%,
+            rgba(229, 231, 235, 1) 100%);
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
 }

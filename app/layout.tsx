@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { ToastProvider } from '@/components/ui/Toast'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -25,7 +26,11 @@ export default function RootLayout({
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             </head>
-            <body className={`${inter.variable} font-sans antialiased`}>{children}</body>
+            <body className={`${inter.variable} font-sans antialiased`}>
+                <ToastProvider>
+                    {children}
+                </ToastProvider>
+            </body>
         </html>
     )
 }
