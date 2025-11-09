@@ -604,7 +604,6 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         setCustomStartDate('');
                                         setCustomEndDate('');
                                         setCustomDays(0);
-                                        setShareWalletAddress('');
                                     }}
                                     className="flex items-center justify-center gap-1.5 px-3 py-3 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl"
                                 >
