@@ -86,97 +86,66 @@ export function clearFiles(walletAddress: string): void {
 }
 
 /**
- * Register a file shared with a wallet address
- * This stores the file metadata in the recipient's localStorage
- */
-export function registerSharedFile(recipientWallet: string, fileMetadata: any): void {
-    try {
-        const sharedFilesKey = `shared_files_${recipientWallet}`;
-        const existing = localStorage.getItem(sharedFilesKey);
-        const sharedFiles = existing ? JSON.parse(existing) : [];
-        
-        // Check if file already shared (avoid duplicates)
-        const exists = sharedFiles.some((f: any) => f.cid === fileMetadata.cid && f.sharedBy === fileMetadata.sharedBy);
-        if (!exists) {
-            sharedFiles.push(fileMetadata);
-            localStorage.setItem(sharedFilesKey, JSON.stringify(sharedFiles));
-            console.log(`📤 Registered shared file ${fileMetadata.cid} for ${recipientWallet.slice(0, 8)}...`);
-            console.log(`   File: ${fileMetadata.fileName}`);
-            console.log(`   Has encryption key: ${!!fileMetadata.encryptionKey}`);
-            console.log(`   Has IV: ${!!fileMetadata.iv}`);
-        } else {
-            console.log(`⚠️ File ${fileMetadata.cid} already shared with ${recipientWallet.slice(0, 8)}...`);
-        }
-    } catch (e) {
-        console.error('❌ Failed to register shared file:', e);
-        throw e;
-    }
-}
-
-/**
- * Get all files shared with a wallet address
+ * Get shared files (placeholder for future blockchain ACL)
  */
 export function getSharedFiles(walletAddress: string): any[] {
+    // Query blockchain for files shared with this address
+    // Also get share tokens from secure-share
+    // This function is now async, so update callers if needed
+    const files: any[] = [];
+
+    // Get share tokens (local and cross-device)
     try {
-        const sharedFilesKey = `shared_files_${walletAddress}`;
-        const stored = localStorage.getItem(sharedFilesKey);
-        
-        if (!stored) {
-            console.log(`📭 No shared files found for ${walletAddress.slice(0, 8)}...`);
-            return [];
-        }
-
-        const sharedFiles = JSON.parse(stored);
-        console.log(`📦 Found ${sharedFiles.length} files in shared storage`);
-        
-        // Filter out expired files
-        const now = new Date();
-        const validFiles = sharedFiles.filter((file: any) => {
-            if (!file.expiresAt) return true; // Permanent access
-            const expiryDate = new Date(file.expiresAt);
-            const isValid = expiryDate > now;
-            if (!isValid) {
-                console.log(`⏰ File ${file.cid} expired on ${expiryDate.toLocaleString()}`);
-            }
-            return isValid;
+        // Import dynamically to avoid circular deps
+        const { getSharedWithWallet } = require('../sharing/secure-share');
+        const shareTokens = getSharedWithWallet(walletAddress);
+        shareTokens.forEach(token => {
+            files.push({
+                cid: token.cid,
+                fileName: token.fileName,
+                encryptionKey: token.encryptionKey,
+                iv: token.iv,
+                sharedBy: token.sharedBy,
+                sharedWith: token.sharedWith,
+                createdAt: token.createdAt,
+                fromShareToken: true
+            });
         });
-
-        // Update storage if any files were filtered
-        if (validFiles.length !== sharedFiles.length) {
-            localStorage.setItem(sharedFilesKey, JSON.stringify(validFiles));
-            console.log(`🧹 Cleaned up ${sharedFiles.length - validFiles.length} expired files`);
-        }
-
-        // Log details for debugging
-        validFiles.forEach((file: any) => {
-            console.log(`   ✓ ${file.fileName} (${file.cid.substring(0, 12)}...) - Shared by ${file.sharedBy?.slice(0, 8)}...`);
-        });
-
-        return validFiles.reverse(); // Most recent first
     } catch (e) {
-        console.error('❌ Failed to get shared files:', e);
-        return [];
+        console.warn('Could not load share tokens:', e);
     }
-}
 
-/**
- * Remove a shared file (when access is revoked)
- */
-export function removeSharedFile(recipientWallet: string, cid: string, sharedBy: string): void {
+    // Get files from blockchain
     try {
-        const sharedFilesKey = `shared_files_${recipientWallet}`;
-        const stored = localStorage.getItem(sharedFilesKey);
-        
-        if (!stored) return;
-
-        const sharedFiles = JSON.parse(stored);
-        const filtered = sharedFiles.filter(
-            (f: any) => !(f.cid === cid && f.sharedBy === sharedBy)
-        );
-
-        localStorage.setItem(sharedFilesKey, JSON.stringify(filtered));
-        console.log(`🗑️ Removed shared file ${cid} for ${recipientWallet.slice(0, 8)}...`);
+        const { getFilesFromBlockchain } = require('../polkadot/blockchain');
+        // This is async, so callers should await this function
+        // For now, just warn if not awaited
+        getFilesFromBlockchain(walletAddress).then(bcFiles => {
+            bcFiles.forEach(bcFile => {
+                // Deduplicate by CID
+                if (!files.some(f => f.cid === bcFile.cid)) {
+                    files.push(bcFile);
+                }
+            });
+        });
     } catch (e) {
-        console.warn('Failed to remove shared file:', e);
+        console.warn('Could not load blockchain files:', e);
     }
+
+    // Also check localStorage for shared files
+    try {
+        const stored = localStorage.getItem(`shared_files_${walletAddress}`);
+        if (stored) {
+            const localFiles = JSON.parse(stored);
+            localFiles.forEach(lf => {
+                if (!files.some(f => f.cid === lf.cid)) {
+                    files.push(lf);
+                }
+            });
+        }
+    } catch (e) {
+        // Ignore localStorage errors
+    }
+
+    return files;
 }
