@@ -188,423 +188,566 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             const updatedFiles = files.filter(f => f.cid !== cid);
             setFiles(updatedFiles);
 
-            console.log('✅ File permanently deleted!');
-            alert('✅ File deleted successfully!\n\nThe file has been:\n✓ Removed from IPFS storage\n✓ Cleared from local cache\n✓ Deleted from registry\n\nIt will not reappear on reload.');
-
-        } catch (error: any) {
-            console.error('❌ Delete failed:', error);
-            alert(`❌ Failed to delete file: ${error.message}\n\nSome data may remain in cache. Please try again.`);
-        }
-    };
-
-    const loadImagePreview = async (file: any) => {
-        try {
-            const encryptionLib = await import('@/lib/encryption/medical-encryption');
-            const ipfsLib = await import('@/lib/ipfs/ipfs-upload-download');
-
-            // Try to get file from IPFS (Pinata)
-            console.log('📥 Fetching image from IPFS:', file.cid);
-            const encryptedArrayBuffer = await ipfsLib.downloadFromIPFS(file.cid);
-
-            if (!encryptedArrayBuffer || encryptedArrayBuffer.byteLength === 0) {
-                throw new Error('Image not found on IPFS network. Please re-upload with Pinata API key.');
-            }
-
-            const key = await encryptionLib.importKey(file.encryptionKey);
-            const iv = new Uint8Array(file.iv);
-            const { fileData: decryptedData } = await encryptionLib.decryptMedicalFile(
-                encryptedArrayBuffer,
-                key,
-                iv
+            return (
+                <div className="relative">
+                    {/* File List Container with custom scrollbar and glass morphism */}
+                    <div className="max-h-[70vh] overflow-y-auto scrollbar-thin glass p-4 rounded-3xl shadow-2xl border border-blue-100">
+                        {loadingFiles ? (
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <div className="skeleton w-32 h-32 rounded-2xl mb-6" />
+                                <div className="skeleton w-64 h-8 rounded-xl mb-2" />
+                                <div className="skeleton w-48 h-8 rounded-xl mb-2" />
+                                <div className="skeleton w-40 h-8 rounded-xl" />
+                            </div>
+                        ) : files.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <div className="text-6xl mb-4">📂</div>
+                                <p className="text-gray-600 font-bold text-xl">No Records Yet</p>
+                                <p className="text-gray-400">Upload your first medical record to get started!</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                {files.map((file, idx) => (
+                                    <div key={file.cid} className="bg-white/80 glass rounded-2xl shadow-lg hover-lift transition-smooth p-6 border border-blue-100 flex flex-col gap-3">
+                                        {/* ...existing file card code... */}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {/* Share Modal - glass morphism, floating close, animated feedback */}
+                    {shareModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                            <div className="glass rounded-3xl shadow-2xl border border-blue-200 max-w-lg w-full p-8 relative animate-scale-in">
+                                <button className="absolute top-4 right-4 text-3xl text-gray-400 hover:text-blue-600 transition-smooth" onClick={() => setShareModal(null)}>
+                                    ×
+                                </button>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="medical-icon bg-gradient-to-br from-green-500 to-blue-500 text-white">
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-2xl text-green-700 mb-1">Share File</h2>
+                                        <p className="text-gray-500 text-sm">Select share type and generate link</p>
+                                    </div>
+                                </div>
+                                <div className="bg-green-50 rounded-xl p-4 mb-4 border border-green-200">
+                                    <p className="font-bold text-lg text-green-700 mb-1">{shareModal.fileName}</p>
+                                    <p className="text-xs text-gray-500">IPFS CID:</p>
+                                    <div className="font-mono text-xs bg-white rounded-lg p-2 border border-gray-200 mb-2">{shareModal.cid}</div>
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Share Type:</label>
+                                    <select className="w-full px-4 py-2 rounded-xl border border-blue-200 bg-white text-blue-700 font-bold" value={shareOption} onChange={e => setShareOption(e.target.value as any)}>
+                                        <option value="one-time">🔒 One-Time Access (expires after 1 view)</option>
+                                        <option value="24-hours">⏰ 24 Hours Access</option>
+                                        <option value="custom">📅 Custom Date Range</option>
+                                        <option value="permanent">🌐 Permanent Access</option>
+                                    </select>
+                                </div>
+                                <button className="w-full py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-2xl font-bold hover:shadow-xl transition-smooth text-xl" onClick={() => {/* ...existing code to generate link... */ }}>
+                                    <span className="inline-flex items-center gap-2">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8a2 2 0 012-2h2" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 12v.01" />
+                                        </svg>
+                                        Generate Share Link
+                                    </span>
+                                </button>
+                                <div className="mt-4 bg-blue-50 rounded-xl p-4 border border-blue-200">
+                                    <p className="text-blue-700 font-bold text-sm mb-1">Security Note:</p>
+                                    <p className="text-xs text-gray-500">Anyone with the share link can access this file. Keep it secure!</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             );
-
-            const blob = new Blob([decryptedData], { type: file.fileType });
-            const imageUrl = URL.createObjectURL(blob);
-            return imageUrl;
-        } catch (err) {
-            console.error('Failed to load image:', err);
-            return null;
-        }
-    };
-
-    const handleEditAI = () => {
-        setIsEditingAI(true);
-        setEditedAIData(JSON.parse(JSON.stringify(aiModal.aiData))); // Deep copy
-    };
-
-    const handleSaveAI = () => {
-        // Update the file's AI data in localStorage
-        const updatedFiles = files.map(f => {
-            if (f.cid === aiModal.cid) {
-                return { ...f, aiData: editedAIData };
-            }
-            return f;
-        });
-
-        localStorage.setItem(`files_${account.address}`, JSON.stringify(updatedFiles));
-        setFiles(updatedFiles);
-
-        // Update the modal with new data
-        setAiModal({ ...aiModal, aiData: editedAIData });
-        setIsEditingAI(false);
-    };
-
-    const handleCancelEdit = () => {
-        setIsEditingAI(false);
-        setEditedAIData(null);
-    };
-
-    const updateAIField = (field: string, value: any) => {
-        setEditedAIData({ ...editedAIData, [field]: value });
-    };
-
-    const updateMedicationField = (index: number, field: string, value: any) => {
-        const updatedMeds = [...editedAIData.medications];
-        updatedMeds[index] = { ...updatedMeds[index], [field]: value };
-        setEditedAIData({ ...editedAIData, medications: updatedMeds });
-    };
-
-    const calculateDaysBetween = (start: string, end: string) => {
-        if (!start || !end) return 0;
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
-    };
-
-    const handleDateChange = (type: 'start' | 'end', value: string) => {
-        if (type === 'start') {
-            setCustomStartDate(value);
-            if (customEndDate) {
-                setCustomDays(calculateDaysBetween(value, customEndDate));
-            }
-        } else {
-            setCustomEndDate(value);
-            if (customStartDate) {
-                setCustomDays(calculateDaysBetween(customStartDate, value));
-            }
-        }
-    };
-
-    const handleGrantAccess = async () => {
-        if (!shareModal) {
-            alert('❌ No file selected for sharing.');
-            return;
-        }
-
-        try {
-            // Use secure token-based sharing (encryption keys NOT in URL)
-            const tokenLib = await import('@/lib/sharing/access-tokens');
-
-            // Create access token
-            const token = tokenLib.createAccessToken(
-                shareModal.cid,
-                shareModal.encryptionKey,
-                shareModal.iv,
-                shareModal.fileName,
-                shareModal.fileType,
+            shareModal.fileType,
                 shareOption, // 'one-time' | '24-hours' | 'permanent'
                 account.address,
                 customStartDate,
                 customEndDate
             );
 
-            // Store token locally (for owner's reference)
-            tokenLib.storeAccessToken(token);
+    // Store token locally (for owner's reference)
+    tokenLib.storeAccessToken(token);
 
-            // Generate shareable URL with token data embedded (works across devices!)
-            const shareLink = tokenLib.generateShareableTokenUrl(token);
+    // Generate shareable URL with token data embedded (works across devices!)
+    const shareLink = tokenLib.generateShareableTokenUrl(token);
 
-            // Set the generated share link to display in UI
-            setGeneratedShareLink(shareLink);
+    // Set the generated share link to display in UI
+    setGeneratedShareLink(shareLink);
 
-            // Copy share link to clipboard
-            navigator.clipboard.writeText(shareLink);
+    // Copy share link to clipboard
+    navigator.clipboard.writeText(shareLink);
 
-            // Get token info for display
-            const tokenInfo = tokenLib.getTokenInfo(token);
+    // Get token info for display
+    const tokenInfo = tokenLib.getTokenInfo(token);
 
-            // Success message
-            const shareTypeEmoji = shareOption === 'one-time' ? '🔒' :
-                shareOption === '24-hours' ? '⏰' : '♾️';
+    // Success message
+    const shareTypeEmoji = shareOption === 'one-time' ? '🔒' :
+        shareOption === '24-hours' ? '⏰' : '♾️';
 
-            const shareTypeText = shareOption === 'one-time' ? 'One-Time Access' :
-                shareOption === '24-hours' ? '24-Hour Access' :
-                    shareOption === 'custom' ? 'Custom Date Range' : 'Permanent Access';
+    const shareTypeText = shareOption === 'one-time' ? 'One-Time Access' :
+        shareOption === '24-hours' ? '24-Hour Access' :
+            shareOption === 'custom' ? 'Custom Date Range' : 'Permanent Access';
 
-            alert(`✅ Secure Share Link Generated!\n\n${shareTypeEmoji} ${shareTypeText}\n📄 File: ${shareModal.fileName}\n\n🔗 Short Link:\n${shareLink}\n\n📋 Link copied to clipboard!\n\n🔐 Security: Encryption keys are NOT in the URL.\nOnly the token ID is visible.`);
+    alert(`✅ Secure Share Link Generated!\n\n${shareTypeEmoji} ${shareTypeText}\n📄 File: ${shareModal.fileName}\n\n🔗 Short Link:\n${shareLink}\n\n📋 Link copied to clipboard!\n\n🔐 Security: Encryption keys are NOT in the URL.\nOnly the token ID is visible.`);
 
-            console.log('📤 Secure token-based link generated');
-            console.log('   Token ID:', token.tokenId);
-            console.log('   Type:', shareOption);
-            console.log('   Link:', shareLink);
-            console.log('   Info:', tokenInfo);
+    console.log('📤 Secure token-based link generated');
+    console.log('   Token ID:', token.tokenId);
+    console.log('   Type:', shareOption);
+    console.log('   Link:', shareLink);
+    console.log('   Info:', tokenInfo);
 
-        } catch (error: any) {
-            console.error('Error generating share link:', error);
-            alert(`❌ Error generating share link: ${error.message}`);
-        }
+} catch (error: any) {
+    console.error('Error generating share link:', error);
+    alert(`❌ Error generating share link: ${error.message}`);
+}
     }; const handleViewAccessList = async () => {
-        if (!shareModal) return;
+    if (!shareModal) return;
 
-        try {
-            const accessControlLib = await import('@/lib/access/access-control');
-            const acl = accessControlLib.getACL(shareModal.cid);
+    try {
+        const accessControlLib = await import('@/lib/access/access-control');
+        const acl = accessControlLib.getACL(shareModal.cid);
 
-            if (!acl) {
-                alert('❌ No access control found for this file.');
-                return;
-            }
-
-            const accessInfo = accessControlLib.getAccessInfo(acl);
-            alert(`📋 Access Control List\n\n${accessInfo}`);
-
-        } catch (error: any) {
-            console.error('Error viewing access list:', error);
-            alert(`❌ Error: ${error.message}`);
+        if (!acl) {
+            alert('❌ No access control found for this file.');
+            return;
         }
-    };
 
-    const getRecordTypeColor = (type: string) => {
-        const colors: any = {
-            prescription: 'bg-green-500/20 text-green-400 border-green-500/50',
-            report: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-            scan: 'bg-purple-500/20 text-purple-400 border-purple-500/50',
-            vaccine: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-            other: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
-        };
-        return colors[type] || colors.other;
-    };
+        const accessInfo = accessControlLib.getAccessInfo(acl);
+        alert(`📋 Access Control List\n\n${accessInfo}`);
 
-    const getRecordTypeBadge = (type: string) => {
-        const badges: any = {
-            prescription: 'bg-green-100 text-green-700 border-2 border-green-300',
-            report: 'bg-blue-100 text-blue-700 border-2 border-blue-300',
-            scan: 'bg-purple-100 text-purple-700 border-2 border-purple-300',
-            vaccine: 'bg-amber-100 text-amber-700 border-2 border-amber-300',
-            other: 'bg-gray-100 text-gray-700 border-2 border-gray-300',
-        };
-        return badges[type] || badges.other;
-    };
-
-    const getRecordTypeEmoji = (type: string) => {
-        const emojis: any = {
-            prescription: '💊',
-            report: '📋',
-            scan: '🔬',
-            vaccine: '💉',
-            other: '📄',
-        };
-        return emojis[type] || emojis.other;
-    };
-
-    if (files.length === 0) {
-        return (
-            <div className="bg-white rounded-3xl p-12 border border-gray-200 text-center shadow-lg">
-                <div className="flex justify-center mb-6">
-                    {sharedMode ? (
-                        <div className="w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                            <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </div>
-                    ) : (
-                        <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-teal-100 rounded-full flex items-center justify-center">
-                            <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                            </svg>
-                        </div>
-                    )}
-                </div>
-                <h3 className="text-2xl font-bold mb-2 text-gray-800">
-                    {sharedMode ? 'No Shared Files Yet' : 'No Records Yet'}
-                </h3>
-                <p className="text-gray-600">
-                    {sharedMode
-                        ? 'Files shared with you will appear here'
-                        : 'Upload your first medical record to get started'}
-                </p>
-            </div>
-        );
+    } catch (error: any) {
+        console.error('Error viewing access list:', error);
+        alert(`❌ Error: ${error.message}`);
     }
+};
 
+const getRecordTypeColor = (type: string) => {
+    const colors: any = {
+        prescription: 'bg-green-500/20 text-green-400 border-green-500/50',
+        report: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
+        scan: 'bg-purple-500/20 text-purple-400 border-purple-500/50',
+        vaccine: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
+        other: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
+    };
+    return colors[type] || colors.other;
+};
+
+const getRecordTypeBadge = (type: string) => {
+    const badges: any = {
+        prescription: 'bg-green-100 text-green-700 border-2 border-green-300',
+        report: 'bg-blue-100 text-blue-700 border-2 border-blue-300',
+        scan: 'bg-purple-100 text-purple-700 border-2 border-purple-300',
+        vaccine: 'bg-amber-100 text-amber-700 border-2 border-amber-300',
+        other: 'bg-gray-100 text-gray-700 border-2 border-gray-300',
+    };
+    return badges[type] || badges.other;
+};
+
+const getRecordTypeEmoji = (type: string) => {
+    const emojis: any = {
+        prescription: '💊',
+        report: '📋',
+        scan: '🔬',
+        vaccine: '💉',
+        other: '📄',
+    };
+    return emojis[type] || emojis.other;
+};
+
+if (files.length === 0) {
     return (
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-3xl p-12 border border-gray-200 text-center shadow-lg">
+            <div className="flex justify-center mb-6">
+                {sharedMode ? (
+                    <div className="w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                        <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                ) : (
+                    <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-teal-100 rounded-full flex items-center justify-center">
+                        <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                         </svg>
                     </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                        My Medical Records
-                    </h2>
+                )}
+            </div>
+            <h3 className="text-2xl font-bold mb-2 text-gray-800">
+                {sharedMode ? 'No Shared Files Yet' : 'No Records Yet'}
+            </h3>
+            <p className="text-gray-600">
+                {sharedMode
+                    ? 'Files shared with you will appear here'
+                    : 'Upload your first medical record to get started'}
+            </p>
+        </div>
+    );
+}
+
+return (
+    <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
+        <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
                 </div>
-                <div className="text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-teal-500 px-5 py-2.5 rounded-xl shadow-lg">
-                    {files.length} {files.length === 1 ? 'file' : 'files'}
-                </div>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+                    My Medical Records
+                </h2>
+            </div>
+            <div className="text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-teal-500 px-5 py-2.5 rounded-xl shadow-lg">
+                {files.length} {files.length === 1 ? 'file' : 'files'}
+            </div>
+        </div>
+
+        {/* Horizontal Scroll Container */}
+        <div className="relative">
+            <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide hover:scrollbar-show" style={{ scrollbarWidth: 'thin' }}>
+                {files.map((file, index) => (
+                    <div
+                        key={file.cid}
+                        style={{ animationDelay: `${index * 100}ms` }}
+                        className="flex-shrink-0 w-80 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 group snap-start animate-slide-up"
+                    >
+                        {/* File Icon & Type Badge */}
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            {file.fileType.startsWith('image/') ? (
+                                <button
+                                    onClick={() => setImagePreviewModal(file)}
+                                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg transition-all hover:scale-105"
+                                >
+                                    VIEW IMAGE
+                                </button>
+                            ) : (
+                                <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${getRecordTypeBadge(file.recordType)}`}>
+                                    {file.recordType.toUpperCase()}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* File Name */}
+                        <h3 className="text-lg font-bold mb-3 truncate text-gray-800 group-hover:text-blue-600 transition-colors">
+                            {file.fileName}
+                        </h3>
+
+                        {/* File Info */}
+                        <div className="space-y-2 text-sm text-gray-600 mb-4">
+                            <p className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                            </p>
+                            <p className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                </svg>
+                                <span>{formatFileSize(file.fileSize)}</span>
+                            </p>
+                            <p className="flex items-center gap-2 truncate">
+                                <svg className="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="truncate text-xs font-mono">{file.cid.substring(0, 20)}...</span>
+                            </p>
+                        </div>
+
+                        {/* AI Data Preview */}
+                        {file.aiData?.medications?.length > 0 && (
+                            <div
+                                className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl cursor-pointer hover:border-purple-400 hover:shadow-lg transition-all"
+                                onClick={() => setAiModal(file)}
+                            >
+                                <p className="text-sm text-purple-700 font-bold mb-2 flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                    AI Extracted Data
+                                </p>
+                                <p className="text-xs text-gray-700">
+                                    {file.aiData.medications.length} medicine(s) • {file.aiData.doctorName || 'Unknown'} • {file.aiData.patientName || 'Unknown'}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* No AI Data Message */}
+                        {!file.aiData?.medications?.length && file.fileType.startsWith('image/') && (
+                            <div className="mb-4 p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                                <p className="text-xs text-yellow-700 font-medium flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    No AI data extracted
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => handleDownload(file)}
+                                disabled={downloading === file.cid}
+                                className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all text-xs font-bold disabled:opacity-50 shadow-lg hover:shadow-xl hover:scale-105"
+                            >
+                                {downloading === file.cid ? (
+                                    <>
+                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        <span>Download</span>
+                                    </>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShareModal(file);
+                                    setShareOption('one-time'); // Default to most secure option
+                                    setGeneratedShareLink(''); // Clear previous link
+                                    setCustomStartDate('');
+                                    setCustomEndDate('');
+                                    setCustomDays(0);
+                                    setShareWalletAddress('');
+                                }}
+                                className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl hover:scale-105"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                <span>Share</span>
+                            </button>
+                            <button
+                                onClick={() => handleDelete(file.cid)}
+                                className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl hover:scale-105"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            {/* Horizontal Scroll Container */}
-            <div className="relative">
-                <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide hover:scrollbar-show" style={{ scrollbarWidth: 'thin' }}>
-                    {files.map((file, index) => (
-                        <div
-                            key={file.cid}
-                            style={{ animationDelay: `${index * 100}ms` }}
-                            className="flex-shrink-0 w-80 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 group snap-start animate-slide-up"
+            {/* Scroll Hint */}
+            <div className="mt-4 text-center text-sm text-gray-500 font-medium flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 animate-bounce-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                Scroll horizontally to see more records
+            </div>
+        </div>
+
+        {/* Share Modal - Responsive & Clean */}
+        {shareModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+                <div className="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-200 shadow-2xl my-4 max-h-[95vh] overflow-y-auto">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                            🔗 Share File
+                        </h3>
+                        <button
+                            onClick={() => {
+                                setShareModal(null);
+                                setShareOption('permanent');
+                                setShareWalletAddress('');
+                                setGeneratedShareLink('');
+                            }}
+                            className="text-3xl sm:text-4xl text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                            {/* File Icon & Type Badge */}
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
+                            ×
+                        </button>
+                    </div>                        <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                        {/* File Information */}
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl border border-green-200">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                                <span className="text-2xl sm:text-3xl">📁</span>
+                                <div>
+                                    <h4 className="text-base sm:text-lg font-bold text-gray-800">{shareModal.fileName}</h4>
+                                    <p className="text-xs sm:text-sm text-gray-600">Select share type and generate link</p>
                                 </div>
-                                {file.fileType.startsWith('image/') ? (
-                                    <button
-                                        onClick={() => setImagePreviewModal(file)}
-                                        className="text-xs font-bold px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg transition-all hover:scale-105"
+                            </div>
+
+                            <div className="space-y-3 sm:space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">IPFS CID:</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={shareModal.cid}
+                                            readOnly
+                                            className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm font-mono text-gray-800"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Share Type Selection */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">Share Type:</label>
+                                    <select
+                                        value={shareOption}
+                                        onChange={(e) => {
+                                            const newOption = e.target.value as 'one-time' | '24-hours' | 'custom' | 'permanent';
+                                            setShareOption(newOption);
+
+                                            // Initialize custom dates when selecting custom option
+                                            if (newOption === 'custom') {
+                                                const today = new Date().toISOString().split('T')[0];
+                                                setCustomStartDate(today);
+                                                setCustomEndDate('');
+                                                setCustomDays(0);
+                                            }
+                                        }}
+                                        className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-green-400"
                                     >
-                                        VIEW IMAGE
-                                    </button>
+                                        <option value="one-time">🔒 One-Time Access (expires after 1 view)</option>
+                                        <option value="24-hours">⏰ 24-Hour Access</option>
+                                        <option value="custom">📅 Custom Date Range</option>
+                                        <option value="permanent">♾️ Permanent Access</option>
+                                    </select>
+                                </div>
+
+                                {/* Custom Date Range Picker */}
+                                {shareOption === 'custom' && (
+                                    <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg sm:rounded-xl border border-purple-300">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-700 mb-1 sm:mb-2">Start Date:</label>
+                                                <input
+                                                    type="date"
+                                                    value={customStartDate}
+                                                    onChange={(e) => {
+                                                        setCustomStartDate(e.target.value);
+                                                        // Recalculate days if both dates are set
+                                                        if (customEndDate && e.target.value) {
+                                                            const start = new Date(e.target.value);
+                                                            const end = new Date(customEndDate);
+                                                            const diffTime = end.getTime() - start.getTime();
+                                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                            setCustomDays(diffDays > 0 ? diffDays : 0);
+                                                        }
+                                                    }}
+                                                    className="w-full px-2 sm:px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-purple-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-700 mb-1 sm:mb-2">End Date:</label>
+                                                <input
+                                                    type="date"
+                                                    value={customEndDate}
+                                                    onChange={(e) => {
+                                                        setCustomEndDate(e.target.value);
+                                                        // Calculate days between dates
+                                                        if (customStartDate && e.target.value) {
+                                                            const start = new Date(customStartDate);
+                                                            const end = new Date(e.target.value);
+                                                            const diffTime = end.getTime() - start.getTime();
+                                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                            setCustomDays(diffDays > 0 ? diffDays : 0);
+                                                        }
+                                                    }}
+                                                    min={customStartDate}
+                                                    className="w-full px-2 sm:px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-purple-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        {customDays > 0 && (
+                                            <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-white rounded-lg border border-purple-400">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs sm:text-sm font-bold text-gray-700">Access Duration:</span>
+                                                    <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                                        {customDays} {customDays === 1 ? 'Day' : 'Days'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-600 mt-1">
+                                                    {new Date(customStartDate).toLocaleDateString()} → {new Date(customEndDate).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Generated Link Display */}
+                                {generatedShareLink ? (
+                                    <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl border-2 border-green-400">
+                                        <p className="text-xs sm:text-sm font-semibold text-green-800 mb-2 sm:mb-3">✅ Share Link Generated!</p>
+                                        <div className="flex flex-col sm:flex-row gap-2 mb-2 sm:mb-3">
+                                            <input
+                                                type="text"
+                                                value={generatedShareLink}
+                                                readOnly
+                                                className="flex-1 px-2 sm:px-3 py-2 bg-gray-50 border border-green-300 rounded-lg text-xs font-mono text-gray-800 break-all"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(generatedShareLink);
+                                                    alert('✅ Link copied!');
+                                                }}
+                                                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap"
+                                            >
+                                                📋 Copy
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            <button
+                                                onClick={() => window.open(generatedShareLink, '_blank')}
+                                                className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold text-xs sm:text-sm"
+                                            >
+                                                🔗 Open Link
+                                            </button>
+                                            <button
+                                                onClick={() => setShareModal(null)}
+                                                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-bold text-xs sm:text-sm"
+                                            >
+                                                ✅ Done
+                                            </button>
+                                        </div>
+                                    </div>
                                 ) : (
-                                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${getRecordTypeBadge(file.recordType)}`}>
-                                        {file.recordType.toUpperCase()}
-                                    </span>
+                                    <button
+                                        onClick={handleGrantAccess}
+                                        className="w-full py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                                    >
+                                        🔗 Generate Share Link
+                                    </button>
                                 )}
                             </div>
+                        </div>
 
-                            {/* File Name */}
-                            <h3 className="text-lg font-bold mb-3 truncate text-gray-800 group-hover:text-blue-600 transition-colors">
-                                {file.fileName}
-                            </h3>
-
-                            {/* File Info */}
-                            <div className="space-y-2 text-sm text-gray-600 mb-4">
-                                <p className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
-                                </p>
-                                <p className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                                    </svg>
-                                    <span>{formatFileSize(file.fileSize)}</span>
-                                </p>
-                                <p className="flex items-center gap-2 truncate">
-                                    <svg className="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="truncate text-xs font-mono">{file.cid.substring(0, 20)}...</span>
-                                </p>
-                            </div>
-
-                            {/* AI Data Preview */}
-                            {file.aiData?.medications?.length > 0 && (
-                                <div
-                                    className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl cursor-pointer hover:border-purple-400 hover:shadow-lg transition-all"
-                                    onClick={() => setAiModal(file)}
-                                >
-                                    <p className="text-sm text-purple-700 font-bold mb-2 flex items-center gap-2">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                        </svg>
-                                        AI Extracted Data
-                                    </p>
-                                    <p className="text-xs text-gray-700">
-                                        {file.aiData.medications.length} medicine(s) • {file.aiData.doctorName || 'Unknown'} • {file.aiData.patientName || 'Unknown'}
-                                    </p>
+                        {/* Security Warning */}
+                        <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg sm:rounded-xl">
+                            <div className="flex items-start gap-2 sm:gap-3">
+                                <span className="text-lg sm:text-xl">ℹ️</span>
+                                <div className="text-xs sm:text-sm text-blue-800">
+                                    <p className="font-bold mb-1">Security Note:</p>
+                                    <p>Anyone with the share link can access this file. Keep it secure!</p>
                                 </div>
-                            )}
-
-                            {/* No AI Data Message */}
-                            {!file.aiData?.medications?.length && file.fileType.startsWith('image/') && (
-                                <div className="mb-4 p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-                                    <p className="text-xs text-yellow-700 font-medium flex items-center gap-2">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                        No AI data extracted
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="grid grid-cols-3 gap-3">
-                                <button
-                                    onClick={() => handleDownload(file)}
-                                    disabled={downloading === file.cid}
-                                    className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all text-xs font-bold disabled:opacity-50 shadow-lg hover:shadow-xl hover:scale-105"
-                                >
-                                    {downloading === file.cid ? (
-                                        <>
-                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                            </svg>
-                                            <span>Download</span>
-                                        </>
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShareModal(file);
-                                        setShareOption('one-time'); // Default to most secure option
-                                        setGeneratedShareLink(''); // Clear previous link
-                                        setCustomStartDate('');
-                                        setCustomEndDate('');
-                                        setCustomDays(0);
-                                        setShareWalletAddress('');
-                                    }}
-                                    className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl hover:scale-105"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                    </svg>
-                                    <span>Share</span>
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(file.cid)}
-                                    className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl hover:scale-105"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    <span>Delete</span>
-                                </button>
                             </div>
                         </div>
-                    ))}
-                </div>
 
-                {/* Scroll Hint */}
-                <div className="mt-4 text-center text-sm text-gray-500 font-medium flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 animate-bounce-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    Scroll horizontally to see more records
-                </div>
-            </div>
-
-            {/* Share Modal - Responsive & Clean */}
-            {shareModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
-                    <div className="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-200 shadow-2xl my-4 max-h-[95vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-4 sm:mb-6">
-                            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                                🔗 Share File
-                            </h3>
+                        {/* Close Button */}
+                        <div className="pt-2">
                             <button
                                 onClick={() => {
                                     setShareModal(null);
@@ -612,588 +755,407 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     setShareWalletAddress('');
                                     setGeneratedShareLink('');
                                 }}
-                                className="text-3xl sm:text-4xl text-gray-400 hover:text-gray-600 transition-colors"
+                                className="w-full py-3 sm:py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg sm:rounded-2xl font-bold hover:shadow-xl transition-all text-sm sm:text-base"
                             >
-                                ×
+                                Close
                             </button>
-                        </div>                        <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                            {/* File Information */}
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl border border-green-200">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                                    <span className="text-2xl sm:text-3xl">📁</span>
-                                    <div>
-                                        <h4 className="text-base sm:text-lg font-bold text-gray-800">{shareModal.fileName}</h4>
-                                        <p className="text-xs sm:text-sm text-gray-600">Select share type and generate link</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 sm:space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">IPFS CID:</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={shareModal.cid}
-                                                readOnly
-                                                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm font-mono text-gray-800"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Share Type Selection */}
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">Share Type:</label>
-                                        <select
-                                            value={shareOption}
-                                            onChange={(e) => {
-                                                const newOption = e.target.value as 'one-time' | '24-hours' | 'custom' | 'permanent';
-                                                setShareOption(newOption);
-
-                                                // Initialize custom dates when selecting custom option
-                                                if (newOption === 'custom') {
-                                                    const today = new Date().toISOString().split('T')[0];
-                                                    setCustomStartDate(today);
-                                                    setCustomEndDate('');
-                                                    setCustomDays(0);
-                                                }
-                                            }}
-                                            className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-green-400"
-                                        >
-                                            <option value="one-time">🔒 One-Time Access (expires after 1 view)</option>
-                                            <option value="24-hours">⏰ 24-Hour Access</option>
-                                            <option value="custom">📅 Custom Date Range</option>
-                                            <option value="permanent">♾️ Permanent Access</option>
-                                        </select>
-                                    </div>
-
-                                    {/* Custom Date Range Picker */}
-                                    {shareOption === 'custom' && (
-                                        <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg sm:rounded-xl border border-purple-300">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-700 mb-1 sm:mb-2">Start Date:</label>
-                                                    <input
-                                                        type="date"
-                                                        value={customStartDate}
-                                                        onChange={(e) => {
-                                                            setCustomStartDate(e.target.value);
-                                                            // Recalculate days if both dates are set
-                                                            if (customEndDate && e.target.value) {
-                                                                const start = new Date(e.target.value);
-                                                                const end = new Date(customEndDate);
-                                                                const diffTime = end.getTime() - start.getTime();
-                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                                                setCustomDays(diffDays > 0 ? diffDays : 0);
-                                                            }
-                                                        }}
-                                                        className="w-full px-2 sm:px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-purple-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-700 mb-1 sm:mb-2">End Date:</label>
-                                                    <input
-                                                        type="date"
-                                                        value={customEndDate}
-                                                        onChange={(e) => {
-                                                            setCustomEndDate(e.target.value);
-                                                            // Calculate days between dates
-                                                            if (customStartDate && e.target.value) {
-                                                                const start = new Date(customStartDate);
-                                                                const end = new Date(e.target.value);
-                                                                const diffTime = end.getTime() - start.getTime();
-                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                                                setCustomDays(diffDays > 0 ? diffDays : 0);
-                                                            }
-                                                        }}
-                                                        min={customStartDate}
-                                                        className="w-full px-2 sm:px-3 py-2 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:border-purple-500"
-                                                    />
-                                                </div>
-                                            </div>
-                                            {customDays > 0 && (
-                                                <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-white rounded-lg border border-purple-400">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-xs sm:text-sm font-bold text-gray-700">Access Duration:</span>
-                                                        <span className="text-base sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                                            {customDays} {customDays === 1 ? 'Day' : 'Days'}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-xs text-gray-600 mt-1">
-                                                        {new Date(customStartDate).toLocaleDateString()} → {new Date(customEndDate).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Generated Link Display */}
-                                    {generatedShareLink ? (
-                                        <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl border-2 border-green-400">
-                                            <p className="text-xs sm:text-sm font-semibold text-green-800 mb-2 sm:mb-3">✅ Share Link Generated!</p>
-                                            <div className="flex flex-col sm:flex-row gap-2 mb-2 sm:mb-3">
-                                                <input
-                                                    type="text"
-                                                    value={generatedShareLink}
-                                                    readOnly
-                                                    className="flex-1 px-2 sm:px-3 py-2 bg-gray-50 border border-green-300 rounded-lg text-xs font-mono text-gray-800 break-all"
-                                                />
-                                                <button
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(generatedShareLink);
-                                                        alert('✅ Link copied!');
-                                                    }}
-                                                    className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap"
-                                                >
-                                                    📋 Copy
-                                                </button>
-                                            </div>
-                                            <div className="flex flex-col sm:flex-row gap-2">
-                                                <button
-                                                    onClick={() => window.open(generatedShareLink, '_blank')}
-                                                    className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold text-xs sm:text-sm"
-                                                >
-                                                    🔗 Open Link
-                                                </button>
-                                                <button
-                                                    onClick={() => setShareModal(null)}
-                                                    className="px-3 sm:px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-bold text-xs sm:text-sm"
-                                                >
-                                                    ✅ Done
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={handleGrantAccess}
-                                            className="w-full py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-                                        >
-                                            🔗 Generate Share Link
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Security Warning */}
-                            <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg sm:rounded-xl">
-                                <div className="flex items-start gap-2 sm:gap-3">
-                                    <span className="text-lg sm:text-xl">ℹ️</span>
-                                    <div className="text-xs sm:text-sm text-blue-800">
-                                        <p className="font-bold mb-1">Security Note:</p>
-                                        <p>Anyone with the share link can access this file. Keep it secure!</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Close Button */}
-                            <div className="pt-2">
-                                <button
-                                    onClick={() => {
-                                        setShareModal(null);
-                                        setShareOption('permanent');
-                                        setShareWalletAddress('');
-                                        setGeneratedShareLink('');
-                                    }}
-                                    className="w-full py-3 sm:py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg sm:rounded-2xl font-bold hover:shadow-xl transition-all text-sm sm:text-base"
-                                >
-                                    Close
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+        )}
 
 
 
-            {/* AI Extraction Modal */}
-            {
-                aiModal && aiModal.aiData && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-                        <div className="bg-white max-w-4xl w-full rounded-3xl p-8 border border-gray-200 shadow-2xl my-8">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                                    🤖 AI Extraction Results
-                                </h3>
-                                <div className="flex items-center gap-3">
-                                    {!isEditingAI ? (
-                                        <button
-                                            onClick={handleEditAI}
-                                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
-                                        >
-                                            ✏️ Edit
-                                        </button>
-                                    ) : (
-                                        <>
-                                            <button
-                                                onClick={handleSaveAI}
-                                                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
-                                            >
-                                                ✅ Save
-                                            </button>
-                                            <button
-                                                onClick={handleCancelEdit}
-                                                className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
-                                            >
-                                                ❌ Cancel
-                                            </button>
-                                        </>
-                                    )}
+        {/* AI Extraction Modal */}
+        {
+            aiModal && aiModal.aiData && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white max-w-4xl w-full rounded-3xl p-8 border border-gray-200 shadow-2xl my-8">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+                                🤖 AI Extraction Results
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                {!isEditingAI ? (
                                     <button
-                                        onClick={() => {
-                                            setAiModal(null);
-                                            setIsEditingAI(false);
-                                            setEditedAIData(null);
-                                        }}
-                                        className="text-4xl text-gray-400 hover:text-gray-600 transition-colors"
+                                        onClick={handleEditAI}
+                                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
                                     >
-                                        ×
+                                        ✏️ Edit
                                     </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-                                {/* Doctor & Patient Info */}
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    {(isEditingAI ? editedAIData : aiModal.aiData).doctorName && (
-                                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border-2 border-blue-300 shadow-md">
-                                            <p className="text-blue-600 text-sm font-bold mb-3">👨‍⚕️ Doctor Information</p>
-                                            {isEditingAI ? (
-                                                <div className="space-y-2">
-                                                    <input
-                                                        type="text"
-                                                        value={editedAIData.doctorName}
-                                                        onChange={(e) => updateAIField('doctorName', e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl font-bold text-xl text-gray-800"
-                                                        placeholder="Doctor Name"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={editedAIData.doctorSpecialization || ''}
-                                                        onChange={(e) => updateAIField('doctorSpecialization', e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-sm text-gray-600"
-                                                        placeholder="Specialization"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={editedAIData.doctorRegistration || ''}
-                                                        onChange={(e) => updateAIField('doctorRegistration', e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-xs text-gray-500"
-                                                        placeholder="Registration No."
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={editedAIData.clinicName || ''}
-                                                        onChange={(e) => updateAIField('clinicName', e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-sm text-gray-600"
-                                                        placeholder="📍 Clinic Name"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <p className="text-gray-800 font-bold text-xl mb-1">{aiModal.aiData.doctorName}</p>
-                                                    {aiModal.aiData.doctorSpecialization && (
-                                                        <p className="text-gray-600 text-sm mt-1">{aiModal.aiData.doctorSpecialization}</p>
-                                                    )}
-                                                    {aiModal.aiData.doctorRegistration && (
-                                                        <p className="text-gray-500 text-xs mt-1">Reg: {aiModal.aiData.doctorRegistration}</p>
-                                                    )}
-                                                    {aiModal.aiData.clinicName && (
-                                                        <p className="text-gray-600 text-sm mt-1">📍 {aiModal.aiData.clinicName}</p>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                    {(isEditingAI ? editedAIData : aiModal.aiData).patientName && (
-                                        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border-2 border-green-300 shadow-md">
-                                            <p className="text-green-600 text-sm font-bold mb-3">👤 Patient Information</p>
-                                            {isEditingAI ? (
-                                                <div className="space-y-2">
-                                                    <input
-                                                        type="text"
-                                                        value={editedAIData.patientName}
-                                                        onChange={(e) => updateAIField('patientName', e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border-2 border-green-300 rounded-xl font-bold text-xl text-gray-800"
-                                                        placeholder="Patient Name"
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={editedAIData.patientAge || ''}
-                                                            onChange={(e) => updateAIField('patientAge', e.target.value)}
-                                                            className="w-1/2 px-3 py-2 bg-white border-2 border-green-300 rounded-xl text-sm text-gray-600"
-                                                            placeholder="Age"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            value={editedAIData.patientGender || ''}
-                                                            onChange={(e) => updateAIField('patientGender', e.target.value)}
-                                                            className="w-1/2 px-3 py-2 bg-white border-2 border-green-300 rounded-xl text-sm text-gray-600"
-                                                            placeholder="Gender"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <p className="text-gray-800 font-bold text-xl mb-1">{aiModal.aiData.patientName}</p>
-                                                    {(aiModal.aiData.patientAge || aiModal.aiData.patientGender) && (
-                                                        <p className="text-gray-600 text-sm mt-1">
-                                                            {aiModal.aiData.patientAge} {aiModal.aiData.patientGender && `• ${aiModal.aiData.patientGender}`}
-                                                        </p>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Diagnosis */}
-                                {(isEditingAI ? editedAIData : aiModal.aiData).diagnosis && (
-                                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 p-5 rounded-2xl shadow-md">
-                                        <p className="text-blue-600 text-sm font-bold mb-2">🩺 Diagnosis</p>
-                                        {isEditingAI ? (
-                                            <textarea
-                                                value={editedAIData.diagnosis}
-                                                onChange={(e) => updateAIField('diagnosis', e.target.value)}
-                                                rows={2}
-                                                className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-lg font-semibold text-gray-800"
-                                                placeholder="Diagnosis"
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800 text-lg font-semibold">{aiModal.aiData.diagnosis}</p>
-                                        )}
-                                    </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={handleSaveAI}
+                                            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+                                        >
+                                            ✅ Save
+                                        </button>
+                                        <button
+                                            onClick={handleCancelEdit}
+                                            className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+                                        >
+                                            ❌ Cancel
+                                        </button>
+                                    </>
                                 )}
-
-                                {/* Medications */}
-                                {(isEditingAI ? editedAIData : aiModal.aiData).medications?.length > 0 && (
-                                    <div>
-                                        <h4 className="text-2xl font-bold mb-4 text-gray-800">💊 Medications ({(isEditingAI ? editedAIData : aiModal.aiData).medications.length})</h4>
-                                        <div className="space-y-4">
-                                            {(isEditingAI ? editedAIData : aiModal.aiData).medications.map((med: any, i: number) => (
-                                                <div key={i} className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 p-6 rounded-2xl shadow-md">
-                                                    {isEditingAI ? (
-                                                        <div className="space-y-3">
-                                                            <div className="flex items-start gap-2">
-                                                                <input
-                                                                    type="text"
-                                                                    value={editedAIData.medications[i].name}
-                                                                    onChange={(e) => updateMedicationField(i, 'name', e.target.value)}
-                                                                    className="flex-1 px-3 py-2 bg-white border-2 border-purple-300 rounded-xl font-bold text-xl text-gray-800"
-                                                                    placeholder="Medicine Name"
-                                                                />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editedAIData.medications[i].dosage}
-                                                                    onChange={(e) => updateMedicationField(i, 'dosage', e.target.value)}
-                                                                    className="w-32 px-3 py-2 bg-green-500 text-white border-2 border-green-600 rounded-xl font-bold text-sm"
-                                                                    placeholder="Dosage"
-                                                                />
-                                                            </div>
-                                                            <input
-                                                                type="text"
-                                                                value={editedAIData.medications[i].genericName || ''}
-                                                                onChange={(e) => updateMedicationField(i, 'genericName', e.target.value)}
-                                                                className="w-full px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm text-gray-600"
-                                                                placeholder="Generic Name (optional)"
-                                                            />
-                                                            <div className="grid md:grid-cols-2 gap-2">
-                                                                <input
-                                                                    type="text"
-                                                                    value={editedAIData.medications[i].frequency}
-                                                                    onChange={(e) => updateMedicationField(i, 'frequency', e.target.value)}
-                                                                    className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
-                                                                    placeholder="Frequency"
-                                                                />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editedAIData.medications[i].timing}
-                                                                    onChange={(e) => updateMedicationField(i, 'timing', e.target.value)}
-                                                                    className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
-                                                                    placeholder="Timing"
-                                                                />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editedAIData.medications[i].duration || ''}
-                                                                    onChange={(e) => updateMedicationField(i, 'duration', e.target.value)}
-                                                                    className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
-                                                                    placeholder="Duration (optional)"
-                                                                />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editedAIData.medications[i].instructions || ''}
-                                                                    onChange={(e) => updateMedicationField(i, 'instructions', e.target.value)}
-                                                                    className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
-                                                                    placeholder="Instructions (optional)"
-                                                                />
-                                                            </div>
-                                                            <textarea
-                                                                value={editedAIData.medications[i].medicineInfo || ''}
-                                                                onChange={(e) => updateMedicationField(i, 'medicineInfo', e.target.value)}
-                                                                rows={2}
-                                                                className="w-full px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
-                                                                placeholder="Medicine Info (optional)"
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div className="flex items-start justify-between mb-3">
-                                                                <div className="flex-1">
-                                                                    <p className="text-gray-800 font-bold text-xl mb-1">{med.name}</p>
-                                                                    {med.genericName && (
-                                                                        <p className="text-gray-600 text-sm">Generic: {med.genericName}</p>
-                                                                    )}
-                                                                </div>
-                                                                <span className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-bold ml-2 shadow-md">
-                                                                    {med.dosage}
-                                                                </span>
-                                                            </div>
-
-                                                            <div className="grid md:grid-cols-2 gap-3 text-sm mb-3">
-                                                                <div className="bg-white/50 p-3 rounded-xl">
-                                                                    <p className="text-gray-600 font-medium">Frequency:</p>
-                                                                    <p className="text-gray-800 font-bold">{med.frequency}</p>
-                                                                </div>
-                                                                <div className="bg-white/50 p-3 rounded-xl">
-                                                                    <p className="text-gray-600 font-medium">Timing:</p>
-                                                                    <p className="text-amber-600 font-bold">{med.timing}</p>
-                                                                </div>
-                                                                {med.duration && (
-                                                                    <div className="bg-white/50 p-3 rounded-xl">
-                                                                        <p className="text-gray-600 font-medium">Duration:</p>
-                                                                        <p className="text-gray-800 font-bold">{med.duration}</p>
-                                                                    </div>
-                                                                )}
-                                                                {med.instructions && (
-                                                                    <div className="bg-white/50 p-3 rounded-xl col-span-2">
-                                                                        <p className="text-gray-600 font-medium">Instructions:</p>
-                                                                        <p className="text-orange-600 font-bold">{med.instructions}</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {med.medicineInfo && (
-                                                                <div className="mt-3 pt-3 border-t-2 border-purple-200">
-                                                                    <p className="text-blue-600 text-sm font-bold mb-2">ℹ️ About this medicine:</p>
-                                                                    <p className="text-gray-700 text-sm leading-relaxed">{med.medicineInfo}</p>
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Additional Info */}
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    {(isEditingAI ? editedAIData : aiModal.aiData).date && (
-                                        <div className="bg-gray-100 p-4 rounded-xl border border-gray-300">
-                                            <p className="text-gray-600 text-xs font-medium">📅 Prescription Date</p>
-                                            {isEditingAI ? (
-                                                <input
-                                                    type="text"
-                                                    value={editedAIData.date}
-                                                    onChange={(e) => updateAIField('date', e.target.value)}
-                                                    className="w-full px-3 py-2 mt-1 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-800"
-                                                    placeholder="Date"
-                                                />
-                                            ) : (
-                                                <p className="text-gray-800 font-bold mt-1">{aiModal.aiData.date}</p>
-                                            )}
-                                        </div>
-                                    )}
-                                    {(isEditingAI ? editedAIData : aiModal.aiData).nextVisit && (
-                                        <div className="bg-gray-100 p-4 rounded-xl border border-gray-300">
-                                            <p className="text-gray-600 text-xs font-medium">🔄 Next Visit</p>
-                                            {isEditingAI ? (
-                                                <input
-                                                    type="text"
-                                                    value={editedAIData.nextVisit}
-                                                    onChange={(e) => updateAIField('nextVisit', e.target.value)}
-                                                    className="w-full px-3 py-2 mt-1 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-800"
-                                                    placeholder="Next Visit"
-                                                />
-                                            ) : (
-                                                <p className="text-gray-800 font-bold mt-1">{aiModal.aiData.nextVisit}</p>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Additional Notes */}
-                                {(isEditingAI ? editedAIData : aiModal.aiData).additionalNotes && (
-                                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 p-5 rounded-2xl shadow-md">
-                                        <p className="text-yellow-700 text-sm font-bold mb-2">📝 Additional Notes</p>
-                                        {isEditingAI ? (
-                                            <textarea
-                                                value={editedAIData.additionalNotes}
-                                                onChange={(e) => updateAIField('additionalNotes', e.target.value)}
-                                                rows={3}
-                                                className="w-full px-3 py-2 bg-white border-2 border-yellow-300 rounded-xl text-gray-800"
-                                                placeholder="Additional Notes"
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800 leading-relaxed">{aiModal.aiData.additionalNotes}</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {!isEditingAI && (
                                 <button
                                     onClick={() => {
                                         setAiModal(null);
                                         setIsEditingAI(false);
                                         setEditedAIData(null);
                                     }}
-                                    className="mt-6 w-full py-4 bg-gradient-to-r from-primary to-accent text-white rounded-2xl font-bold hover:shadow-xl transition-all"
-                                >
-                                    Close
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Image Preview Modal */}
-            {
-                imagePreviewModal && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                        <div className="bg-white max-w-6xl w-full rounded-3xl p-8 border border-gray-200 shadow-2xl relative">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                                        📋 Prescription Image
-                                    </h3>
-                                    <p className="text-gray-600 text-sm">{imagePreviewModal.fileName}</p>
-                                </div>
-                                <button
-                                    onClick={() => setImagePreviewModal(null)}
                                     className="text-4xl text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     ×
                                 </button>
                             </div>
+                        </div>
 
-                            <div className="bg-gray-100 rounded-2xl p-4 max-h-[70vh] overflow-auto">
-                                <ImagePreview file={imagePreviewModal} loadImage={loadImagePreview} />
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                            {/* Doctor & Patient Info */}
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {(isEditingAI ? editedAIData : aiModal.aiData).doctorName && (
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border-2 border-blue-300 shadow-md">
+                                        <p className="text-blue-600 text-sm font-bold mb-3">👨‍⚕️ Doctor Information</p>
+                                        {isEditingAI ? (
+                                            <div className="space-y-2">
+                                                <input
+                                                    type="text"
+                                                    value={editedAIData.doctorName}
+                                                    onChange={(e) => updateAIField('doctorName', e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl font-bold text-xl text-gray-800"
+                                                    placeholder="Doctor Name"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={editedAIData.doctorSpecialization || ''}
+                                                    onChange={(e) => updateAIField('doctorSpecialization', e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-sm text-gray-600"
+                                                    placeholder="Specialization"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={editedAIData.doctorRegistration || ''}
+                                                    onChange={(e) => updateAIField('doctorRegistration', e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-xs text-gray-500"
+                                                    placeholder="Registration No."
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={editedAIData.clinicName || ''}
+                                                    onChange={(e) => updateAIField('clinicName', e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-sm text-gray-600"
+                                                    placeholder="📍 Clinic Name"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="text-gray-800 font-bold text-xl mb-1">{aiModal.aiData.doctorName}</p>
+                                                {aiModal.aiData.doctorSpecialization && (
+                                                    <p className="text-gray-600 text-sm mt-1">{aiModal.aiData.doctorSpecialization}</p>
+                                                )}
+                                                {aiModal.aiData.doctorRegistration && (
+                                                    <p className="text-gray-500 text-xs mt-1">Reg: {aiModal.aiData.doctorRegistration}</p>
+                                                )}
+                                                {aiModal.aiData.clinicName && (
+                                                    <p className="text-gray-600 text-sm mt-1">📍 {aiModal.aiData.clinicName}</p>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                                {(isEditingAI ? editedAIData : aiModal.aiData).patientName && (
+                                    <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border-2 border-green-300 shadow-md">
+                                        <p className="text-green-600 text-sm font-bold mb-3">👤 Patient Information</p>
+                                        {isEditingAI ? (
+                                            <div className="space-y-2">
+                                                <input
+                                                    type="text"
+                                                    value={editedAIData.patientName}
+                                                    onChange={(e) => updateAIField('patientName', e.target.value)}
+                                                    className="w-full px-3 py-2 bg-white border-2 border-green-300 rounded-xl font-bold text-xl text-gray-800"
+                                                    placeholder="Patient Name"
+                                                />
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={editedAIData.patientAge || ''}
+                                                        onChange={(e) => updateAIField('patientAge', e.target.value)}
+                                                        className="w-1/2 px-3 py-2 bg-white border-2 border-green-300 rounded-xl text-sm text-gray-600"
+                                                        placeholder="Age"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        value={editedAIData.patientGender || ''}
+                                                        onChange={(e) => updateAIField('patientGender', e.target.value)}
+                                                        className="w-1/2 px-3 py-2 bg-white border-2 border-green-300 rounded-xl text-sm text-gray-600"
+                                                        placeholder="Gender"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="text-gray-800 font-bold text-xl mb-1">{aiModal.aiData.patientName}</p>
+                                                {(aiModal.aiData.patientAge || aiModal.aiData.patientGender) && (
+                                                    <p className="text-gray-600 text-sm mt-1">
+                                                        {aiModal.aiData.patientAge} {aiModal.aiData.patientGender && `• ${aiModal.aiData.patientGender}`}
+                                                    </p>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
+                            {/* Diagnosis */}
+                            {(isEditingAI ? editedAIData : aiModal.aiData).diagnosis && (
+                                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 p-5 rounded-2xl shadow-md">
+                                    <p className="text-blue-600 text-sm font-bold mb-2">🩺 Diagnosis</p>
+                                    {isEditingAI ? (
+                                        <textarea
+                                            value={editedAIData.diagnosis}
+                                            onChange={(e) => updateAIField('diagnosis', e.target.value)}
+                                            rows={2}
+                                            className="w-full px-3 py-2 bg-white border-2 border-blue-300 rounded-xl text-lg font-semibold text-gray-800"
+                                            placeholder="Diagnosis"
+                                        />
+                                    ) : (
+                                        <p className="text-gray-800 text-lg font-semibold">{aiModal.aiData.diagnosis}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Medications */}
+                            {(isEditingAI ? editedAIData : aiModal.aiData).medications?.length > 0 && (
+                                <div>
+                                    <h4 className="text-2xl font-bold mb-4 text-gray-800">💊 Medications ({(isEditingAI ? editedAIData : aiModal.aiData).medications.length})</h4>
+                                    <div className="space-y-4">
+                                        {(isEditingAI ? editedAIData : aiModal.aiData).medications.map((med: any, i: number) => (
+                                            <div key={i} className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 p-6 rounded-2xl shadow-md">
+                                                {isEditingAI ? (
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-start gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={editedAIData.medications[i].name}
+                                                                onChange={(e) => updateMedicationField(i, 'name', e.target.value)}
+                                                                className="flex-1 px-3 py-2 bg-white border-2 border-purple-300 rounded-xl font-bold text-xl text-gray-800"
+                                                                placeholder="Medicine Name"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={editedAIData.medications[i].dosage}
+                                                                onChange={(e) => updateMedicationField(i, 'dosage', e.target.value)}
+                                                                className="w-32 px-3 py-2 bg-green-500 text-white border-2 border-green-600 rounded-xl font-bold text-sm"
+                                                                placeholder="Dosage"
+                                                            />
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            value={editedAIData.medications[i].genericName || ''}
+                                                            onChange={(e) => updateMedicationField(i, 'genericName', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm text-gray-600"
+                                                            placeholder="Generic Name (optional)"
+                                                        />
+                                                        <div className="grid md:grid-cols-2 gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={editedAIData.medications[i].frequency}
+                                                                onChange={(e) => updateMedicationField(i, 'frequency', e.target.value)}
+                                                                className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
+                                                                placeholder="Frequency"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={editedAIData.medications[i].timing}
+                                                                onChange={(e) => updateMedicationField(i, 'timing', e.target.value)}
+                                                                className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
+                                                                placeholder="Timing"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={editedAIData.medications[i].duration || ''}
+                                                                onChange={(e) => updateMedicationField(i, 'duration', e.target.value)}
+                                                                className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
+                                                                placeholder="Duration (optional)"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={editedAIData.medications[i].instructions || ''}
+                                                                onChange={(e) => updateMedicationField(i, 'instructions', e.target.value)}
+                                                                className="px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
+                                                                placeholder="Instructions (optional)"
+                                                            />
+                                                        </div>
+                                                        <textarea
+                                                            value={editedAIData.medications[i].medicineInfo || ''}
+                                                            onChange={(e) => updateMedicationField(i, 'medicineInfo', e.target.value)}
+                                                            rows={2}
+                                                            className="w-full px-3 py-2 bg-white border-2 border-purple-300 rounded-xl text-sm"
+                                                            placeholder="Medicine Info (optional)"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex-1">
+                                                                <p className="text-gray-800 font-bold text-xl mb-1">{med.name}</p>
+                                                                {med.genericName && (
+                                                                    <p className="text-gray-600 text-sm">Generic: {med.genericName}</p>
+                                                                )}
+                                                            </div>
+                                                            <span className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-bold ml-2 shadow-md">
+                                                                {med.dosage}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="grid md:grid-cols-2 gap-3 text-sm mb-3">
+                                                            <div className="bg-white/50 p-3 rounded-xl">
+                                                                <p className="text-gray-600 font-medium">Frequency:</p>
+                                                                <p className="text-gray-800 font-bold">{med.frequency}</p>
+                                                            </div>
+                                                            <div className="bg-white/50 p-3 rounded-xl">
+                                                                <p className="text-gray-600 font-medium">Timing:</p>
+                                                                <p className="text-amber-600 font-bold">{med.timing}</p>
+                                                            </div>
+                                                            {med.duration && (
+                                                                <div className="bg-white/50 p-3 rounded-xl">
+                                                                    <p className="text-gray-600 font-medium">Duration:</p>
+                                                                    <p className="text-gray-800 font-bold">{med.duration}</p>
+                                                                </div>
+                                                            )}
+                                                            {med.instructions && (
+                                                                <div className="bg-white/50 p-3 rounded-xl col-span-2">
+                                                                    <p className="text-gray-600 font-medium">Instructions:</p>
+                                                                    <p className="text-orange-600 font-bold">{med.instructions}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {med.medicineInfo && (
+                                                            <div className="mt-3 pt-3 border-t-2 border-purple-200">
+                                                                <p className="text-blue-600 text-sm font-bold mb-2">ℹ️ About this medicine:</p>
+                                                                <p className="text-gray-700 text-sm leading-relaxed">{med.medicineInfo}</p>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Additional Info */}
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {(isEditingAI ? editedAIData : aiModal.aiData).date && (
+                                    <div className="bg-gray-100 p-4 rounded-xl border border-gray-300">
+                                        <p className="text-gray-600 text-xs font-medium">📅 Prescription Date</p>
+                                        {isEditingAI ? (
+                                            <input
+                                                type="text"
+                                                value={editedAIData.date}
+                                                onChange={(e) => updateAIField('date', e.target.value)}
+                                                className="w-full px-3 py-2 mt-1 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-800"
+                                                placeholder="Date"
+                                            />
+                                        ) : (
+                                            <p className="text-gray-800 font-bold mt-1">{aiModal.aiData.date}</p>
+                                        )}
+                                    </div>
+                                )}
+                                {(isEditingAI ? editedAIData : aiModal.aiData).nextVisit && (
+                                    <div className="bg-gray-100 p-4 rounded-xl border border-gray-300">
+                                        <p className="text-gray-600 text-xs font-medium">🔄 Next Visit</p>
+                                        {isEditingAI ? (
+                                            <input
+                                                type="text"
+                                                value={editedAIData.nextVisit}
+                                                onChange={(e) => updateAIField('nextVisit', e.target.value)}
+                                                className="w-full px-3 py-2 mt-1 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-800"
+                                                placeholder="Next Visit"
+                                            />
+                                        ) : (
+                                            <p className="text-gray-800 font-bold mt-1">{aiModal.aiData.nextVisit}</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Additional Notes */}
+                            {(isEditingAI ? editedAIData : aiModal.aiData).additionalNotes && (
+                                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 p-5 rounded-2xl shadow-md">
+                                    <p className="text-yellow-700 text-sm font-bold mb-2">📝 Additional Notes</p>
+                                    {isEditingAI ? (
+                                        <textarea
+                                            value={editedAIData.additionalNotes}
+                                            onChange={(e) => updateAIField('additionalNotes', e.target.value)}
+                                            rows={3}
+                                            className="w-full px-3 py-2 bg-white border-2 border-yellow-300 rounded-xl text-gray-800"
+                                            placeholder="Additional Notes"
+                                        />
+                                    ) : (
+                                        <p className="text-gray-800 leading-relaxed">{aiModal.aiData.additionalNotes}</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {!isEditingAI && (
                             <button
-                                onClick={() => setImagePreviewModal(null)}
-                                className="mt-6 w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+                                onClick={() => {
+                                    setAiModal(null);
+                                    setIsEditingAI(false);
+                                    setEditedAIData(null);
+                                }}
+                                className="mt-6 w-full py-4 bg-gradient-to-r from-primary to-accent text-white rounded-2xl font-bold hover:shadow-xl transition-all"
                             >
                                 Close
                             </button>
-                        </div>
+                        )}
                     </div>
-                )
-            }
-        </div >
-    );
+                </div>
+            )
+        }
+
+        {/* Image Preview Modal */}
+        {
+            imagePreviewModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-white max-w-6xl w-full rounded-3xl p-8 border border-gray-200 shadow-2xl relative">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                                    📋 Prescription Image
+                                </h3>
+                                <p className="text-gray-600 text-sm">{imagePreviewModal.fileName}</p>
+                            </div>
+                            <button
+                                onClick={() => setImagePreviewModal(null)}
+                                className="text-4xl text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="bg-gray-100 rounded-2xl p-4 max-h-[70vh] overflow-auto">
+                            <ImagePreview file={imagePreviewModal} loadImage={loadImagePreview} />
+                        </div>
+
+                        <button
+                            onClick={() => setImagePreviewModal(null)}
+                            className="mt-6 w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )
+        }
+    </div >
+);
 }
 
 // Image Preview Component
