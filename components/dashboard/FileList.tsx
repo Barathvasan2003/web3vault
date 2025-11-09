@@ -1027,9 +1027,20 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                                 placeholder="Enter Polkadot wallet address (e.g., 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY)"
                                                 className="w-full px-4 py-3 bg-white border-2 border-purple-300 rounded-xl text-xs sm:text-sm font-mono text-gray-800 focus:outline-none focus:border-purple-500 transition-colors"
                                             />
-                                            <p className="text-xs text-gray-600 mt-2">
-                                                💡 This person will see this file in their "Shared With Me" tab
-                                            </p>
+                                            <div className="mt-3 space-y-2">
+                                                <p className="text-xs text-gray-600">
+                                                    💡 This person will see this file in their "Shared With Me" tab
+                                                </p>
+                                                <div className="p-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg text-xs text-purple-800">
+                                                    <p className="font-semibold mb-1">🌐 Cross-Device Magic:</p>
+                                                    <ul className="list-disc list-inside space-y-0.5 text-purple-700">
+                                                        <li>Stored on Polkadot blockchain</li>
+                                                        <li>Works across any device or browser</li>
+                                                        <li>Automatic sync when they log in</li>
+                                                        <li>No link needed!</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </motion.div>
                                     )}
 
