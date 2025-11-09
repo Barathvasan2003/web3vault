@@ -38,23 +38,26 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
 
         if (sharedMode) {
             // Load files shared with current user
+            // NOTE: This works when files are shared on the same device/browser
+            // For cross-device sharing, files need to be shared via blockchain or backend API
             const sharedFiles = fileRegistry.getSharedFiles(account.address);
-            console.log(`📥 Found ${sharedFiles.length} files in shared storage`);
+            console.log(`📥 Found ${sharedFiles.length} files in shared storage for ${account.address.slice(0, 8)}...`);
             
             // Verify access for each shared file and ensure all required data exists
             const accessControlLib = await import('@/lib/access/access-control');
             const validFiles = sharedFiles.filter(file => {
                 // Check if file has all required data
                 if (!file.encryptionKey || !file.iv) {
-                    console.warn(`⚠️ Shared file ${file.cid} missing encryption data`);
+                    console.warn(`⚠️ Shared file ${file.cid} missing encryption data - skipping`);
                     return false;
                 }
                 
                 // Try to get ACL (with wallet address for recipient lookup)
                 const acl = accessControlLib.getACL(file.cid, account.address);
                 if (!acl) {
-                    console.warn(`⚠️ No ACL found for shared file ${file.cid}, but file exists - allowing access`);
-                    // If file exists in shared storage, allow it (might be from old sharing method)
+                    // If file exists in shared storage but no ACL, create a temporary one
+                    console.log(`ℹ️ No ACL found for shared file ${file.cid}, creating temporary access`);
+                    // Allow access if file metadata exists (backward compatibility)
                     return true;
                 }
                 
@@ -69,11 +72,17 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             });
             
             console.log(`✅ ${validFiles.length} shared files with valid access and complete data`);
+            
+            // If no files found, try to check if there are any shared files in the system
+            if (validFiles.length === 0 && sharedFiles.length === 0) {
+                console.log('💡 Tip: Files shared with your wallet address will appear here when the sharer is on the same device, or when using blockchain-based sharing.');
+            }
+            
             setFiles(validFiles);
             
             // Refresh trigger to update UI
             if (validFiles.length > 0) {
-                console.log('📋 Shared files loaded:', validFiles.map(f => f.fileName));
+                console.log('📋 Shared files loaded:', validFiles.map(f => `${f.fileName} (from ${f.sharedBy?.slice(0, 8)}...)`));
             }
         } else {
             // Load user's own files from local registry
