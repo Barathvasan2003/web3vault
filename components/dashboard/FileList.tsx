@@ -37,27 +37,64 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         const fileRegistry = await import('@/lib/storage/file-registry');
 
         if (sharedMode) {
-            // Load files shared with current user
-            // NOTE: This works when files are shared on the same device/browser
-            // For cross-device sharing, files need to be shared via blockchain or backend API
-            const sharedFiles = fileRegistry.getSharedFiles(account.address);
-            console.log(`📥 Found ${sharedFiles.length} files in shared storage for ${account.address.slice(0, 8)}...`);
+            // Load files shared with current user from multiple sources
+            const allSharedFiles: any[] = [];
+            
+            // 1. Load from local storage (same device/browser)
+            const localSharedFiles = fileRegistry.getSharedFiles(account.address);
+            console.log(`📥 Found ${localSharedFiles.length} files in local shared storage`);
+            allSharedFiles.push(...localSharedFiles);
+            
+            // 2. Load from blockchain (CROSS-DEVICE and CROSS-BROWSER)
+            try {
+                const blockchainLib = await import('@/lib/polkadot/blockchain');
+                const blockchainSharedFiles = await blockchainLib.getSharedFilesFromBlockchain(account.address);
+                console.log(`⛓️ Found ${blockchainSharedFiles.length} shared files on blockchain`);
+                
+                // Merge blockchain files (avoid duplicates by CID + sharedBy)
+                blockchainSharedFiles.forEach(bcFile => {
+                    const exists = allSharedFiles.some(f => 
+                        f.cid === bcFile.cid && f.sharedBy === bcFile.sharedBy
+                    );
+                    if (!exists) {
+                        allSharedFiles.push(bcFile);
+                        // Also store locally for faster future access
+                        fileRegistry.registerSharedFile(account.address, bcFile);
+                    }
+                });
+            } catch (blockchainError) {
+                console.warn('⚠️ Blockchain query failed, using local storage only:', blockchainError);
+            }
+            
+            console.log(`📦 Total ${allSharedFiles.length} shared files found (local + blockchain)`);
             
             // Verify access for each shared file and ensure all required data exists
             const accessControlLib = await import('@/lib/access/access-control');
-            const validFiles = sharedFiles.filter(file => {
+            const validFiles = allSharedFiles.filter(file => {
                 // Check if file has all required data
                 if (!file.encryptionKey || !file.iv) {
                     console.warn(`⚠️ Shared file ${file.cid} missing encryption data - skipping`);
                     return false;
                 }
                 
+                // Check expiration
+                if (file.expiresAt) {
+                    const expiryDate = new Date(file.expiresAt);
+                    if (expiryDate < new Date()) {
+                        console.log(`⏰ Shared file ${file.cid} expired on ${expiryDate.toLocaleString()}`);
+                        return false;
+                    }
+                }
+                
                 // Try to get ACL (with wallet address for recipient lookup)
                 const acl = accessControlLib.getACL(file.cid, account.address);
                 if (!acl) {
-                    // If file exists in shared storage but no ACL, create a temporary one
-                    console.log(`ℹ️ No ACL found for shared file ${file.cid}, creating temporary access`);
-                    // Allow access if file metadata exists (backward compatibility)
+                    // If file exists in shared storage but no ACL, allow access (from blockchain)
+                    if (file.fromBlockchain) {
+                        console.log(`ℹ️ No ACL found for blockchain shared file ${file.cid}, allowing access`);
+                        return true;
+                    }
+                    // For local files, allow if metadata exists (backward compatibility)
                     return true;
                 }
                 
@@ -73,16 +110,18 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             
             console.log(`✅ ${validFiles.length} shared files with valid access and complete data`);
             
-            // If no files found, try to check if there are any shared files in the system
-            if (validFiles.length === 0 && sharedFiles.length === 0) {
-                console.log('💡 Tip: Files shared with your wallet address will appear here when the sharer is on the same device, or when using blockchain-based sharing.');
-            }
+            // Remove duplicates (same CID and sharedBy)
+            const uniqueFiles = validFiles.filter((file, index, self) =>
+                index === self.findIndex(f => f.cid === file.cid && f.sharedBy === file.sharedBy)
+            );
             
-            setFiles(validFiles);
+            setFiles(uniqueFiles);
             
             // Refresh trigger to update UI
-            if (validFiles.length > 0) {
-                console.log('📋 Shared files loaded:', validFiles.map(f => `${f.fileName} (from ${f.sharedBy?.slice(0, 8)}...)`));
+            if (uniqueFiles.length > 0) {
+                console.log('📋 Shared files loaded:', uniqueFiles.map(f => 
+                    `${f.fileName} (from ${f.sharedBy?.slice(0, 8)}...${f.fromBlockchain ? ' [Blockchain]' : ' [Local]'})`
+                ));
             }
         } else {
             // Load user's own files from local registry
@@ -421,6 +460,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                     recipient: shareWalletAddress.trim()
                 });
                 
+                // Store locally (for same-device access)
                 fileRegistry.registerSharedFile(shareWalletAddress.trim(), sharedFileMetadata);
                 
                 // Also store ACL for recipient so they can verify access
@@ -437,11 +477,40 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 const recipientACLKey = `acl_${updatedACL.cid}_${shareWalletAddress.trim()}`;
                 localStorage.setItem(recipientACLKey, JSON.stringify(recipientACL));
 
-                showToast(
-                    `✅ File shared with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! They can now access it in "Shared With Me".`,
-                    'success',
-                    5000
-                );
+                // Store on blockchain for CROSS-DEVICE and CROSS-BROWSER access
+                try {
+                    const blockchainLib = await import('@/lib/polkadot/blockchain');
+                    await blockchainLib.registerSharedFileOnChain(
+                        account,
+                        {
+                            cid: sharedFileMetadata.cid,
+                            fileName: sharedFileMetadata.fileName,
+                            fileType: sharedFileMetadata.fileType,
+                            fileSize: sharedFileMetadata.fileSize,
+                            encryptionKey: sharedFileMetadata.encryptionKey,
+                            iv: sharedFileMetadata.iv,
+                            recipientWallet: shareWalletAddress.trim(),
+                            accessType: accessType,
+                            expiresAt: durationHours 
+                                ? Date.now() + durationHours * 60 * 60 * 1000
+                                : undefined,
+                            recordType: sharedFileMetadata.recordType
+                        }
+                    );
+                    console.log('⛓️ Shared file metadata stored on blockchain for cross-device access');
+                    showToast(
+                        `✅ File shared with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! They can access it from any device via blockchain.`,
+                        'success',
+                        6000
+                    );
+                } catch (blockchainError: any) {
+                    console.warn('⚠️ Blockchain sharing failed, using local storage only:', blockchainError);
+                    showToast(
+                        `✅ File shared locally with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! (Blockchain unavailable - works on same device only)`,
+                        'success',
+                        5000
+                    );
+                }
 
                 // Reset form
                 setShareModal(null);
@@ -592,10 +661,13 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                     <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-sm">
                         <p className="font-semibold text-blue-900 mb-2">💡 How to receive shared files:</p>
                         <ul className="list-disc list-inside space-y-1 text-blue-800 text-xs">
-                            <li><strong>Same Device:</strong> Files shared via wallet address appear here automatically</li>
-                            <li><strong>Different Device:</strong> Ask the sharer to use "Share Link" option and send you the link</li>
-                            <li><strong>Family Sharing:</strong> Share files with family wallet addresses for permanent access</li>
+                            <li><strong>🌐 Cross-Device:</strong> Files shared via blockchain appear here from any device/browser</li>
+                            <li><strong>🔗 Share Links:</strong> Use "Share Link" option for instant access via QR code or URL</li>
+                            <li><strong>👥 Family Sharing:</strong> Share files with family wallet addresses for permanent access</li>
                         </ul>
+                        <p className="text-xs text-blue-700 mt-2 font-semibold">
+                            ✨ Files are synced via Polkadot blockchain - works across all devices!
+                        </p>
                     </div>
                 )}
             </div>

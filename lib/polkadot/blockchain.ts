@@ -545,6 +545,62 @@ export async function registerFileOnChain(
 }
 
 /**
+ * Register shared file on blockchain for cross-device access
+ * Stores shared file metadata so recipient can access from any device
+ */
+export async function registerSharedFileOnChain(
+    account: InjectedAccountWithMeta,
+    sharedFileMetadata: {
+        cid: string;
+        fileName: string;
+        fileType: string;
+        fileSize: number;
+        encryptionKey: string;
+        iv: number[];
+        recipientWallet: string;
+        accessType: 'temporary' | 'permanent';
+        expiresAt?: number;
+        recordType?: string;
+    }
+): Promise<void> {
+    if (!api) {
+        throw new Error('Blockchain API not initialized');
+    }
+
+    try {
+        const injector = await web3FromAddress(account.address);
+
+        // Create metadata for shared file (stored on-chain)
+        const metadata = {
+            type: 'SHARED_FILE',
+            cid: sharedFileMetadata.cid,
+            fileName: sharedFileMetadata.fileName,
+            fileType: sharedFileMetadata.fileType,
+            fileSize: sharedFileMetadata.fileSize,
+            encryptionKey: sharedFileMetadata.encryptionKey,
+            iv: sharedFileMetadata.iv,
+            sharedBy: account.address,
+            sharedWith: sharedFileMetadata.recipientWallet,
+            accessType: sharedFileMetadata.accessType,
+            expiresAt: sharedFileMetadata.expiresAt,
+            recordType: sharedFileMetadata.recordType || 'other',
+            timestamp: Date.now()
+        };
+
+        const remarkData = JSON.stringify(metadata);
+        const remarkTx = api.tx.system.remark(remarkData);
+
+        // Sign and send transaction
+        await remarkTx.signAndSend(account.address, { signer: injector.signer });
+
+        console.log(`⛓️ Shared file metadata registered on blockchain for ${sharedFileMetadata.recipientWallet.slice(0, 8)}...`);
+    } catch (error: any) {
+        console.error('❌ Blockchain sharing registration failed:', error);
+        throw new Error('Failed to register shared file on blockchain: ' + error.message);
+    }
+}
+
+/**
  * Get files from blockchain for a wallet address
  * This enables cross-device file access
  */
@@ -596,6 +652,104 @@ export async function getFilesFromBlockchain(walletAddress: string): Promise<any
         return files;
     } catch (error: any) {
         console.error('❌ Failed to query blockchain:', error);
+        return [];
+    }
+}
+
+/**
+ * Get shared files from blockchain for a wallet address
+ * This enables cross-device access to files shared with you
+ */
+export async function getSharedFilesFromBlockchain(recipientWallet: string): Promise<any[]> {
+    if (!api) {
+        console.warn('Blockchain not connected, using local storage only');
+        return [];
+    }
+
+    try {
+        // Query recent blocks for shared file metadata
+        // Note: In production, use a custom pallet or indexer for better performance
+        const latestBlock = await api.rpc.chain.getBlock();
+        const blockNumber = latestBlock.block.header.number.toNumber();
+        
+        // Check last 1000 blocks for shared files (adjust based on needs)
+        const startBlock = Math.max(0, blockNumber - 1000);
+        const files: any[] = [];
+
+        console.log(`🔍 Searching blocks ${startBlock} to ${blockNumber} for shared files...`);
+
+        // Search recent blocks for shared files
+        // For demo: check last 100 blocks (adjust based on network activity)
+        // In production, use an indexer or custom pallet for better performance
+        const blocksToCheck = Math.min(100, blockNumber);
+        const checkedBlocks = new Set<string>(); // Track checked CIDs to avoid duplicates
+        
+        for (let i = 0; i < blocksToCheck; i++) {
+            try {
+                const blockNumberToCheck = blockNumber - i;
+                if (blockNumberToCheck < 0) break;
+                
+                const blockHash = await api.rpc.chain.getBlockHash(blockNumberToCheck);
+                const events = await api.query.system.events.at(blockHash);
+                const eventsArray = Array.isArray(events) ? events : Array.from(events as any);
+
+                eventsArray.forEach((record: any) => {
+                    const { event } = record;
+
+                    if (event.section === 'system' && event.method === 'Remarked') {
+                        try {
+                            const remarkData = event.data[1].toString();
+                            const metadata = JSON.parse(remarkData);
+
+                            if (
+                                metadata.type === 'SHARED_FILE' &&
+                                metadata.sharedWith === recipientWallet
+                            ) {
+                                // Create unique key to avoid duplicates
+                                const fileKey = `${metadata.cid}_${metadata.sharedBy}`;
+                                if (checkedBlocks.has(fileKey)) continue;
+                                checkedBlocks.add(fileKey);
+                                
+                                // Check if expired
+                                if (metadata.expiresAt && metadata.expiresAt < Date.now()) {
+                                    return; // Skip expired files
+                                }
+
+                                files.push({
+                                    cid: metadata.cid,
+                                    fileName: metadata.fileName,
+                                    fileType: metadata.fileType,
+                                    fileSize: metadata.fileSize,
+                                    encryptionKey: metadata.encryptionKey,
+                                    iv: metadata.iv,
+                                    uploadedAt: new Date(metadata.timestamp).toISOString(),
+                                    sharedBy: metadata.sharedBy,
+                                    sharedAt: new Date(metadata.timestamp).toISOString(),
+                                    accessType: metadata.accessType,
+                                    expiresAt: metadata.expiresAt ? new Date(metadata.expiresAt).toISOString() : null,
+                                    recordType: metadata.recordType || 'other',
+                                    owner: metadata.sharedBy,
+                                    fromBlockchain: true
+                                });
+                            }
+                        } catch (e) {
+                            // Invalid remark, skip
+                        }
+                    }
+                });
+            } catch (e) {
+                // Block not available or error, continue to next block
+                if (i < 10) {
+                    // Only log errors for recent blocks
+                    console.warn(`⚠️ Could not check block ${blockNumber - i}:`, e);
+                }
+            }
+        }
+
+        console.log(`⛓️ Found ${files.length} shared files on blockchain for ${recipientWallet.slice(0, 8)}...`);
+        return files;
+    } catch (error: any) {
+        console.error('❌ Failed to query blockchain for shared files:', error);
         return [];
     }
 }
