@@ -22,7 +22,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', duration: number = 4000) => {
         const id = Math.random().toString(36).substring(7);
         const newToast: Toast = { id, message, type, duration };
-        
+
         setToasts((prev) => [...prev, newToast]);
 
         setTimeout(() => {
@@ -52,14 +52,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                                 className={`
                                     px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border-2
                                     min-w-[300px] max-w-md
-                                    ${
-                                        toast.type === 'success'
-                                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-400'
-                                            : toast.type === 'error'
+                                    ${toast.type === 'success'
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-400'
+                                        : toast.type === 'error'
                                             ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-400'
                                             : toast.type === 'warning'
-                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400'
-                                            : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400'
+                                                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400'
+                                                : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-400'
                                     }
                                 `}
                             >

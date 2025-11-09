@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import { useToast } from '@/components/ui/Toast';
 
 interface FileListProps {
@@ -23,7 +24,6 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [customDays, setCustomDays] = useState(0);
-    const [shareWalletAddress, setShareWalletAddress] = useState('');
     const [generatedShareLink, setGeneratedShareLink] = useState('');
     const [linkCopied, setLinkCopied] = useState(false);
 
@@ -436,21 +436,30 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
     }
 
     return (
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border-2 border-gray-100 shadow-2xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+                <div className="flex items-center space-x-4">
+                    <motion.div
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl"
+                    >
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                         </svg>
+                    </motion.div>
+                    <div>
+                        <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent">
+                            My Medical Records
+                        </h2>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Securely stored and encrypted</p>
                     </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                        My Medical Records
-                    </h2>
                 </div>
-                <div className="text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-teal-500 px-5 py-2.5 rounded-xl shadow-lg">
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="text-sm font-bold text-white bg-gradient-to-r from-blue-500 via-purple-500 to-teal-500 px-6 py-3 rounded-xl shadow-lg"
+                >
                     {files.length} {files.length === 1 ? 'file' : 'files'}
-                </div>
+                </motion.div>
             </div>
 
             {/* Horizontal Scroll Container - Enhanced */}
@@ -474,22 +483,27 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                 scale: 1.02,
                                 transition: { duration: 0.2 }
                             }}
-                            className="flex-shrink-0 w-80 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 group snap-start"
+                            className="flex-shrink-0 w-80 bg-gradient-to-br from-white via-gray-50 to-white border-2 border-gray-200 rounded-2xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 group snap-start"
                         >
                             {/* File Icon & Type Badge */}
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                            <div className="flex items-start justify-between mb-5">
+                                <motion.div
+                                    whileHover={{ scale: 1.1, rotate: 5 }}
+                                    className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-xl"
+                                >
                                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                </div>
+                                </motion.div>
                                 {file.fileType.startsWith('image/') ? (
-                                    <button
+                                    <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => setImagePreviewModal(file)}
-                                        className="text-xs font-bold px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg transition-all hover:scale-105"
+                                        className="text-xs font-bold px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white shadow-lg hover:shadow-xl transition-all"
                                     >
                                         VIEW IMAGE
-                                    </button>
+                                    </motion.button>
                                 ) : (
                                     <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${getRecordTypeBadge(file.recordType)}`}>
                                         {file.recordType.toUpperCase()}
@@ -498,12 +512,12 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                             </div>
 
                             {/* File Name */}
-                            <h3 className="text-lg font-bold mb-3 truncate text-gray-800 group-hover:text-blue-600 transition-colors">
+                            <h3 className="text-lg font-bold mb-4 truncate text-gray-800 group-hover:text-blue-600 transition-colors">
                                 {file.fileName}
                             </h3>
 
                             {/* File Info */}
-                            <div className="space-y-2 text-sm text-gray-600 mb-4">
+                            <div className="space-y-2.5 text-sm text-gray-600 mb-5">
                                 <p className="flex items-center gap-2">
                                     <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -526,8 +540,9 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
 
                             {/* AI Data Preview */}
                             {file.aiData?.medications?.length > 0 && (
-                                <div
-                                    className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl cursor-pointer hover:border-purple-400 hover:shadow-lg transition-all"
+                                <motion.div
+                                    whileHover={{ scale: 1.02, y: -2 }}
+                                    className="mb-5 p-4 bg-gradient-to-r from-purple-50 via-pink-50 to-rose-50 border-2 border-purple-200 rounded-xl cursor-pointer hover:border-purple-400 hover:shadow-lg transition-all"
                                     onClick={() => setAiModal(file)}
                                 >
                                     <p className="text-sm text-purple-700 font-bold mb-2 flex items-center gap-2">
@@ -539,7 +554,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     <p className="text-xs text-gray-700">
                                         {file.aiData.medications.length} medicine(s) • {file.aiData.doctorName || 'Unknown'} • {file.aiData.patientName || 'Unknown'}
                                     </p>
-                                </div>
+                                </motion.div>
                             )}
 
                             {/* No AI Data Message */}
@@ -555,13 +570,13 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                             )}
 
                             {/* Actions */}
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-3 gap-2.5">
                                 <motion.button
-                                    whileHover={{ scale: 1.05 }}
+                                    whileHover={{ scale: 1.05, y: -2 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => handleDownload(file)}
                                     disabled={downloading === file.cid}
-                                    className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all text-xs font-bold disabled:opacity-50 shadow-lg hover:shadow-xl"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-3 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all text-xs font-bold disabled:opacity-50 shadow-lg hover:shadow-xl"
                                 >
                                     {downloading === file.cid ? (
                                         <>
@@ -580,7 +595,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     )}
                                 </motion.button>
                                 <motion.button
-                                    whileHover={{ scale: 1.05 }}
+                                    whileHover={{ scale: 1.05, y: -2 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => {
                                         setShareModal(file);
@@ -591,7 +606,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         setCustomDays(0);
                                         setShareWalletAddress('');
                                     }}
-                                    className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-3 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -599,10 +614,10 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                     <span>Share</span>
                                 </motion.button>
                                 <motion.button
-                                    whileHover={{ scale: 1.05 }}
+                                    whileHover={{ scale: 1.05, y: -2 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => handleDelete(file.cid)}
-                                    className="flex items-center justify-center gap-1 px-3 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-3 bg-gradient-to-r from-red-500 via-rose-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-xs font-bold shadow-lg hover:shadow-xl"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -615,12 +630,25 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 </div>
 
                 {/* Scroll Hint */}
-                <div className="mt-4 text-center text-sm text-gray-500 font-medium flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 animate-bounce-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    Scroll horizontally to see more records
-                </div>
+                {files.length > 1 && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-6 text-center text-sm text-gray-500 font-medium flex items-center justify-center gap-2"
+                    >
+                        <motion.svg
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                            className="w-5 h-5 text-blue-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </motion.svg>
+                        <span>Scroll horizontally to see more records</span>
+                    </motion.div>
+                )}
             </div>
 
             {/* Share Modal - Modern with Animations */}
@@ -664,7 +692,6 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         onClick={() => {
                                             setShareModal(null);
                                             setShareOption('one-time');
-                                            setShareWalletAddress('');
                                             setGeneratedShareLink('');
                                         }}
                                         className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors flex items-center justify-center text-2xl font-bold"
@@ -782,14 +809,14 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         </div>
                                     )}
 
-                                    {/* Generated Link Display */}
+                                    {/* Generated Link Display with QR Code */}
                                     {generatedShareLink ? (
                                         <motion.div
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-400 shadow-lg"
+                                            className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-400 shadow-xl"
                                         >
-                                            <div className="flex items-center gap-2 mb-4">
+                                            <div className="flex items-center gap-2 mb-5">
                                                 <motion.span
                                                     animate={{ scale: [1, 1.2, 1] }}
                                                     transition={{ repeat: Infinity, duration: 2 }}
@@ -797,57 +824,99 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                                 >
                                                     ✅
                                                 </motion.span>
-                                                <p className="text-sm font-bold text-green-800">Share Link Generated!</p>
+                                                <p className="text-base font-bold text-green-800">Share Link Generated!</p>
                                             </div>
-                                            <div className="space-y-3">
-                                                <div className="relative">
-                                                    <input
-                                                        type="text"
-                                                        value={generatedShareLink}
-                                                        readOnly
-                                                        className="w-full px-4 py-3 bg-white border-2 border-green-300 rounded-xl text-xs font-mono text-gray-800 break-all pr-24 focus:outline-none focus:border-green-500 transition-colors"
-                                                    />
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(generatedShareLink);
-                                                            setLinkCopied(true);
-                                                            setTimeout(() => setLinkCopied(false), 3000);
-                                                            showToast('Link copied to clipboard!', 'success', 2000);
-                                                        }}
-                                                        className={`absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap transition-all ${
-                                                            linkCopied
-                                                                ? 'bg-green-600 text-white'
-                                                                : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg'
-                                                        }`}
-                                                    >
-                                                        {linkCopied ? '✓ Copied!' : '📋 Copy'}
-                                                    </motion.button>
+                                            
+                                            <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                                {/* QR Code Section */}
+                                                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border-2 border-green-200">
+                                                    <p className="text-xs font-semibold text-gray-600 mb-3">Scan to Access</p>
+                                                    <div className="p-3 bg-white rounded-lg shadow-inner">
+                                                        <QRCodeSVG
+                                                            value={generatedShareLink}
+                                                            size={160}
+                                                            level="H"
+                                                            includeMargin={true}
+                                                            fgColor="#059669"
+                                                            bgColor="#ffffff"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-3 text-center max-w-[180px]">
+                                                        Scan with your phone camera to open instantly
+                                                    </p>
                                                 </div>
-                                                <div className="flex gap-3">
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={() => window.open(generatedShareLink, '_blank')}
-                                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all"
-                                                    >
-                                                        🔗 Open Link
-                                                    </motion.button>
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={() => {
-                                                            setShareModal(null);
-                                                            setShareOption('one-time');
-                                                            setShareWalletAddress('');
-                                                            setGeneratedShareLink('');
-                                                        }}
-                                                        className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all"
-                                                    >
-                                                        ✅ Done
-                                                    </motion.button>
+
+                                                {/* Link Section */}
+                                                <div className="flex flex-col justify-center space-y-3">
+                                                    <div className="relative">
+                                                        <label className="block text-xs font-semibold text-gray-600 mb-2">Share Link:</label>
+                                                        <input
+                                                            type="text"
+                                                            value={generatedShareLink}
+                                                            readOnly
+                                                            className="w-full px-4 py-3 bg-white border-2 border-green-300 rounded-xl text-xs font-mono text-gray-800 break-all pr-28 focus:outline-none focus:border-green-500 transition-colors"
+                                                        />
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(generatedShareLink);
+                                                                setLinkCopied(true);
+                                                                setTimeout(() => setLinkCopied(false), 3000);
+                                                                showToast('Link copied to clipboard!', 'success', 2000);
+                                                            }}
+                                                            className={`absolute right-2 top-9 px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap transition-all ${
+                                                                linkCopied
+                                                                    ? 'bg-green-600 text-white'
+                                                                    : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg'
+                                                            }`}
+                                                        >
+                                                            {linkCopied ? '✓ Copied!' : '📋 Copy'}
+                                                        </motion.button>
+                                                    </div>
+                                                    
+                                                    <div className="pt-2">
+                                                        <p className="text-xs text-gray-600 mb-2 font-medium">Share Type:</p>
+                                                        <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-green-200">
+                                                            <span className="text-lg">
+                                                                {shareOption === 'one-time' ? '🔒' : shareOption === '24-hours' ? '⏰' : shareOption === 'custom' ? '📅' : '♾️'}
+                                                            </span>
+                                                            <span className="text-xs font-semibold text-gray-700">
+                                                                {shareOption === 'one-time' ? 'One-Time Access' : 
+                                                                 shareOption === '24-hours' ? '24-Hour Access' : 
+                                                                 shareOption === 'custom' ? 'Custom Date Range' : 'Permanent Access'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-3 pt-2">
+                                                <motion.button
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => window.open(generatedShareLink, '_blank')}
+                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                    </svg>
+                                                    Open Link
+                                                </motion.button>
+                                                <motion.button
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => {
+                                                        setShareModal(null);
+                                                        setShareOption('one-time');
+                                                        setShareWalletAddress('');
+                                                        setGeneratedShareLink('');
+                                                    }}
+                                                    className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all"
+                                                >
+                                                    ✅ Done
+                                                </motion.button>
                                             </div>
                                         </motion.div>
                                     ) : (
@@ -883,7 +952,6 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         onClick={() => {
                                             setShareModal(null);
                                             setShareOption('one-time');
-                                            setShareWalletAddress('');
                                             setGeneratedShareLink('');
                                         }}
                                         className="w-full py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
