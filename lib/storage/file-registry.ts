@@ -99,7 +99,7 @@ export function getSharedFiles(walletAddress: string): any[] {
         // Import dynamically to avoid circular deps
         const { getSharedWithWallet } = require('../sharing/secure-share');
         const shareTokens = getSharedWithWallet(walletAddress);
-        shareTokens.forEach(token => {
+        shareTokens.forEach((token: any) => {
             files.push({
                 cid: token.cid,
                 fileName: token.fileName,
@@ -120,8 +120,8 @@ export function getSharedFiles(walletAddress: string): any[] {
         const { getFilesFromBlockchain } = require('../polkadot/blockchain');
         // This is async, so callers should await this function
         // For now, just warn if not awaited
-        getFilesFromBlockchain(walletAddress).then(bcFiles => {
-            bcFiles.forEach(bcFile => {
+        getFilesFromBlockchain(walletAddress).then((bcFiles: any) => {
+            bcFiles.forEach((bcFile: any) => {
                 // Deduplicate by CID
                 if (!files.some(f => f.cid === bcFile.cid)) {
                     files.push(bcFile);
