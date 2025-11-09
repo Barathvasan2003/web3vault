@@ -40,12 +40,34 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             // Load files shared with current user from multiple sources
             const allSharedFiles: any[] = [];
             
-            // 1. Load from local storage (same device/browser)
+            // 1. Load from local storage (same device/browser - fastest)
             const localSharedFiles = fileRegistry.getSharedFiles(account.address);
             console.log(`📥 Found ${localSharedFiles.length} files in local shared storage`);
             allSharedFiles.push(...localSharedFiles);
             
-            // 2. Load from blockchain (CROSS-DEVICE and CROSS-BROWSER)
+            // 2. PRIMARY: Load from IPFS (TRUE CROSS-DEVICE and CROSS-BROWSER)
+            // This is the main solution - works even if blockchain is down!
+            try {
+                const ipfsShareRegistry = await import('@/lib/sharing/ipfs-share-registry');
+                const ipfsSharedFiles = await ipfsShareRegistry.getSharedFilesFromIPFS(account.address);
+                console.log(`🌐 Found ${ipfsSharedFiles.length} shared files from IPFS`);
+                
+                // Merge IPFS files (avoid duplicates by CID + sharedBy)
+                ipfsSharedFiles.forEach(ipfsFile => {
+                    const exists = allSharedFiles.some(f => 
+                        f.cid === ipfsFile.cid && f.sharedBy === ipfsFile.sharedBy
+                    );
+                    if (!exists) {
+                        allSharedFiles.push(ipfsFile);
+                        // Also store locally for faster future access
+                        fileRegistry.registerSharedFile(account.address, ipfsFile);
+                    }
+                });
+            } catch (ipfsError) {
+                console.warn('⚠️ IPFS query failed:', ipfsError);
+            }
+            
+            // 3. SECONDARY: Load from blockchain (backup/optional)
             try {
                 const blockchainLib = await import('@/lib/polkadot/blockchain');
                 const blockchainSharedFiles = await blockchainLib.getSharedFilesFromBlockchain(account.address);
@@ -63,10 +85,10 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                     }
                 });
             } catch (blockchainError) {
-                console.warn('⚠️ Blockchain query failed, using local storage only:', blockchainError);
+                console.warn('⚠️ Blockchain query failed (optional):', blockchainError);
             }
             
-            console.log(`📦 Total ${allSharedFiles.length} shared files found (local + blockchain)`);
+            console.log(`📦 Total ${allSharedFiles.length} shared files found (local + IPFS + blockchain)`);
             
             // Verify access for each shared file and ensure all required data exists
             const accessControlLib = await import('@/lib/access/access-control');
@@ -477,7 +499,36 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 const recipientACLKey = `acl_${updatedACL.cid}_${shareWalletAddress.trim()}`;
                 localStorage.setItem(recipientACLKey, JSON.stringify(recipientACL));
 
-                // Store on blockchain for CROSS-DEVICE and CROSS-BROWSER access
+                // PRIMARY: Store in IPFS for TRUE cross-device and cross-browser access
+                // This works even if blockchain is down!
+                let ipfsSuccess = false;
+                try {
+                    const ipfsShareRegistry = await import('@/lib/sharing/ipfs-share-registry');
+                    await ipfsShareRegistry.uploadSharedFileMetadata({
+                        cid: sharedFileMetadata.cid,
+                        fileName: sharedFileMetadata.fileName,
+                        fileType: sharedFileMetadata.fileType,
+                        fileSize: sharedFileMetadata.fileSize,
+                        encryptionKey: sharedFileMetadata.encryptionKey,
+                        iv: sharedFileMetadata.iv,
+                        recipientWallet: shareWalletAddress.trim(),
+                        sharedBy: account.address,
+                        accessType: accessType,
+                        expiresAt: durationHours 
+                            ? Date.now() + durationHours * 60 * 60 * 1000
+                            : undefined,
+                        recordType: sharedFileMetadata.recordType,
+                        uploadedAt: sharedFileMetadata.uploadedAt,
+                        sharedAt: sharedFileMetadata.sharedAt
+                    });
+                    ipfsSuccess = true;
+                    console.log('🌐 Shared file metadata stored in IPFS for cross-device access');
+                } catch (ipfsError: any) {
+                    console.warn('⚠️ IPFS sharing failed:', ipfsError);
+                }
+
+                // SECONDARY: Also try blockchain as backup (optional)
+                let blockchainSuccess = false;
                 try {
                     const blockchainLib = await import('@/lib/polkadot/blockchain');
                     await blockchainLib.registerSharedFileOnChain(
@@ -497,16 +548,28 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                             recordType: sharedFileMetadata.recordType
                         }
                     );
-                    console.log('⛓️ Shared file metadata stored on blockchain for cross-device access');
+                    blockchainSuccess = true;
+                    console.log('⛓️ Shared file metadata also stored on blockchain');
+                } catch (blockchainError: any) {
+                    console.warn('⚠️ Blockchain sharing failed (optional):', blockchainError);
+                }
+
+                // Show success message
+                if (ipfsSuccess) {
+                    showToast(
+                        `✅ File shared with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! They can access it from ANY device/browser via IPFS!`,
+                        'success',
+                        6000
+                    );
+                } else if (blockchainSuccess) {
                     showToast(
                         `✅ File shared with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! They can access it from any device via blockchain.`,
                         'success',
                         6000
                     );
-                } catch (blockchainError: any) {
-                    console.warn('⚠️ Blockchain sharing failed, using local storage only:', blockchainError);
+                } else {
                     showToast(
-                        `✅ File shared locally with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! (Blockchain unavailable - works on same device only)`,
+                        `✅ File shared locally with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! (IPFS/Blockchain unavailable - works on same device only)`,
                         'success',
                         5000
                     );
@@ -661,12 +724,12 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                     <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-sm">
                         <p className="font-semibold text-blue-900 mb-2">💡 How to receive shared files:</p>
                         <ul className="list-disc list-inside space-y-1 text-blue-800 text-xs">
-                            <li><strong>🌐 Cross-Device:</strong> Files shared via blockchain appear here from any device/browser</li>
+                            <li><strong>🌐 Cross-Device:</strong> Files shared via IPFS appear here from ANY device/browser</li>
                             <li><strong>🔗 Share Links:</strong> Use "Share Link" option for instant access via QR code or URL</li>
                             <li><strong>👥 Family Sharing:</strong> Share files with family wallet addresses for permanent access</li>
                         </ul>
                         <p className="text-xs text-blue-700 mt-2 font-semibold">
-                            ✨ Files are synced via Polkadot blockchain - works across all devices!
+                            ✨ Files are stored in IPFS (decentralized) - works across all devices, no blockchain needed!
                         </p>
                     </div>
                 )}
@@ -1032,12 +1095,13 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                                     💡 This person will see this file in their "Shared With Me" tab
                                                 </p>
                                                 <div className="p-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg text-xs text-purple-800">
-                                                    <p className="font-semibold mb-1">🌐 Cross-Device Magic:</p>
+                                                    <p className="font-semibold mb-1">🌐 True Cross-Device Sharing:</p>
                                                     <ul className="list-disc list-inside space-y-0.5 text-purple-700">
-                                                        <li>Stored on Polkadot blockchain</li>
-                                                        <li>Works across any device or browser</li>
+                                                        <li>Stored in IPFS (decentralized storage)</li>
+                                                        <li>Works across ANY device or browser</li>
+                                                        <li>No blockchain required!</li>
                                                         <li>Automatic sync when they log in</li>
-                                                        <li>No link needed!</li>
+                                                        <li>No link needed - just their wallet address!</li>
                                                     </ul>
                                                 </div>
                                             </div>
