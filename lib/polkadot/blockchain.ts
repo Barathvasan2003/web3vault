@@ -707,7 +707,7 @@ export async function getSharedFilesFromBlockchain(recipientWallet: string): Pro
                             ) {
                                 // Create unique key to avoid duplicates
                                 const fileKey = `${metadata.cid}_${metadata.sharedBy}`;
-                                if (checkedBlocks.has(fileKey)) continue;
+                                if (checkedBlocks.has(fileKey)) return; // Skip duplicates
                                 checkedBlocks.add(fileKey);
                                 
                                 // Check if expired
