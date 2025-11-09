@@ -86,10 +86,77 @@ export function clearFiles(walletAddress: string): void {
 }
 
 /**
- * Get shared files (placeholder for future blockchain ACL)
+ * Register a file shared with a wallet address
+ */
+export function registerSharedFile(recipientWallet: string, fileMetadata: any): void {
+    try {
+        const sharedFilesKey = `shared_files_${recipientWallet}`;
+        const existing = localStorage.getItem(sharedFilesKey);
+        const sharedFiles = existing ? JSON.parse(existing) : [];
+        
+        // Check if file already shared (avoid duplicates)
+        const exists = sharedFiles.some((f: any) => f.cid === fileMetadata.cid && f.sharedBy === fileMetadata.sharedBy);
+        if (!exists) {
+            sharedFiles.push(fileMetadata);
+            localStorage.setItem(sharedFilesKey, JSON.stringify(sharedFiles));
+            console.log(`📤 Registered shared file ${fileMetadata.cid} for ${recipientWallet.slice(0, 8)}...`);
+        }
+    } catch (e) {
+        console.warn('Failed to register shared file:', e);
+    }
+}
+
+/**
+ * Get all files shared with a wallet address
  */
 export function getSharedFiles(walletAddress: string): any[] {
-    // TODO: Query blockchain for files shared with this address
-    // For now, return empty array
-    return [];
+    try {
+        const sharedFilesKey = `shared_files_${walletAddress}`;
+        const stored = localStorage.getItem(sharedFilesKey);
+        
+        if (!stored) {
+            return [];
+        }
+
+        const sharedFiles = JSON.parse(stored);
+        
+        // Filter out expired files
+        const now = new Date();
+        const validFiles = sharedFiles.filter((file: any) => {
+            if (!file.expiresAt) return true; // Permanent access
+            return new Date(file.expiresAt) > now;
+        });
+
+        // Update storage if any files were filtered
+        if (validFiles.length !== sharedFiles.length) {
+            localStorage.setItem(sharedFilesKey, JSON.stringify(validFiles));
+        }
+
+        return validFiles.reverse(); // Most recent first
+    } catch (e) {
+        console.warn('Failed to get shared files:', e);
+        return [];
+    }
+}
+
+/**
+ * Remove a shared file (when access is revoked)
+ */
+export function removeSharedFile(recipientWallet: string, cid: string, sharedBy: string): void {
+    try {
+        const sharedFilesKey = `shared_files_${recipientWallet}`;
+        const stored = localStorage.getItem(sharedFilesKey);
+        
+        if (!stored) return;
+
+        const sharedFiles = JSON.parse(stored);
+        const filtered = sharedFiles.filter(
+            (f: any) => !(f.cid === cid && f.sharedBy === sharedBy)
+        );
+
+        localStorage.setItem(sharedFilesKey, JSON.stringify(filtered));
+        console.log(`🗑️ Removed shared file ${cid} for ${recipientWallet.slice(0, 8)}...`);
+    } catch (e) {
+        console.warn('Failed to remove shared file:', e);
+    }
 }

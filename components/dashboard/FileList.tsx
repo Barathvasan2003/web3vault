@@ -21,6 +21,8 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
     const [editedAIData, setEditedAIData] = useState<any>(null);
     const [imagePreviewModal, setImagePreviewModal] = useState<any>(null);
     const [shareOption, setShareOption] = useState<'one-time' | '24-hours' | 'custom' | 'permanent'>('one-time');
+    const [shareMethod, setShareMethod] = useState<'link' | 'wallet'>('link');
+    const [shareWalletAddress, setShareWalletAddress] = useState('');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [customDays, setCustomDays] = useState(0);
@@ -35,9 +37,19 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         const fileRegistry = await import('@/lib/storage/file-registry');
 
         if (sharedMode) {
-            // Load files shared with current user from blockchain
+            // Load files shared with current user
             const sharedFiles = fileRegistry.getSharedFiles(account.address);
-            setFiles(sharedFiles);
+            console.log(`📥 Found ${sharedFiles.length} files shared with you`);
+            
+            // Verify access for each shared file
+            const accessControlLib = await import('@/lib/access/access-control');
+            const validFiles = sharedFiles.filter(file => {
+                const accessCheck = accessControlLib.verifyAccess(file.cid, account.address);
+                return accessCheck.hasAccess;
+            });
+            
+            setFiles(validFiles);
+            console.log(`✅ ${validFiles.length} shared files with valid access`);
         } else {
             // Load user's own files from local registry
             let userFiles = fileRegistry.getFiles(account.address);
@@ -297,8 +309,87 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
             return;
         }
 
+        // Validate wallet address if sharing via wallet
+        if (shareMethod === 'wallet') {
+            if (!shareWalletAddress || shareWalletAddress.trim().length === 0) {
+                showToast('Please enter a wallet address to share with.', 'error');
+                return;
+            }
+            // Basic validation for Polkadot address format
+            if (shareWalletAddress.length < 32) {
+                showToast('Invalid wallet address. Please check and try again.', 'error');
+                return;
+            }
+        }
+
         try {
-            // Use secure token-based sharing (encryption keys NOT in URL)
+            // If sharing via wallet address, use access control system
+            if (shareMethod === 'wallet') {
+                const accessControlLib = await import('@/lib/access/access-control');
+                const fileRegistry = await import('@/lib/storage/file-registry');
+                
+                // Get or create ACL
+                let acl = accessControlLib.getACL(shareModal.cid);
+                if (!acl) {
+                    acl = accessControlLib.createACL(shareModal.cid, account.address);
+                }
+
+                // Determine access type based on share option
+                // For wallet sharing, one-time becomes 24-hour temporary access
+                const accessType: 'temporary' | 'permanent' = 
+                    shareOption === 'permanent' ? 'permanent' : 'temporary';
+
+                // Calculate duration for temporary access
+                let durationHours: number | undefined = undefined;
+                if (shareOption === 'one-time' || shareOption === '24-hours') {
+                    durationHours = 24; // One-time for wallet = 24 hours
+                } else if (shareOption === 'custom' && customStartDate && customEndDate) {
+                    const start = new Date(customStartDate);
+                    const end = new Date(customEndDate);
+                    durationHours = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+                }
+
+                // Grant access
+                const updatedACL = accessControlLib.grantAccess(
+                    acl,
+                    shareWalletAddress.trim(),
+                    accessType,
+                    account.address,
+                    durationHours
+                );
+                accessControlLib.storeACL(updatedACL);
+
+                // Store shared file metadata for the recipient
+                const sharedFileMetadata = {
+                    ...shareModal,
+                    sharedBy: account.address,
+                    sharedAt: new Date().toISOString(),
+                    accessType: accessType,
+                    expiresAt: durationHours 
+                        ? new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString()
+                        : null
+                };
+                fileRegistry.registerSharedFile(shareWalletAddress.trim(), sharedFileMetadata);
+
+                showToast(
+                    `✅ File shared with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! They can now access it in "Shared With Me".`,
+                    'success',
+                    5000
+                );
+
+                // Reset form
+                setShareModal(null);
+                setShareMethod('link');
+                setShareWalletAddress('');
+                setShareOption('one-time');
+                setGeneratedShareLink('');
+                setCustomStartDate('');
+                setCustomEndDate('');
+                setCustomDays(0);
+                return;
+            }
+
+            // Use secure token-based sharing for link sharing (encryption keys NOT in URL)
             const tokenLib = await import('@/lib/sharing/access-tokens');
 
             // Create access token
@@ -448,9 +539,9 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                         </svg>
                     </motion.div>
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent">
-                            My Medical Records
-                        </h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent">
+                        {sharedMode ? 'Shared With Me' : 'My Medical Records'}
+                    </h2>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">Securely stored and encrypted</p>
                     </div>
                 </div>
@@ -511,10 +602,17 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                 )}
                             </div>
 
-                            {/* File Name */}
-                            <h3 className="text-lg font-bold mb-4 truncate text-gray-800 group-hover:text-blue-600 transition-colors">
-                                {file.fileName}
-                            </h3>
+                            {/* File Name with Shared Indicator */}
+                            <div className="flex items-center gap-2 mb-4">
+                                <h3 className="text-lg font-bold truncate text-gray-800 group-hover:text-blue-600 transition-colors flex-1">
+                                    {file.fileName}
+                                </h3>
+                                {sharedMode && file.sharedBy && (
+                                    <span className="px-2 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs font-bold rounded-lg border border-purple-200">
+                                        👥 Shared
+                                    </span>
+                                )}
+                            </div>
 
                             {/* File Info */}
                             <div className="space-y-2.5 text-sm text-gray-600 mb-5">
@@ -690,8 +788,13 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         whileTap={{ scale: 0.9 }}
                                         onClick={() => {
                                             setShareModal(null);
+                                            setShareMethod('link');
                                             setShareOption('one-time');
+                                            setShareWalletAddress('');
                                             setGeneratedShareLink('');
+                                            setCustomStartDate('');
+                                            setCustomEndDate('');
+                                            setCustomDays(0);
                                         }}
                                         className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors flex items-center justify-center text-2xl font-bold"
                                     >
@@ -722,9 +825,69 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         </div>
                                     </div>
 
+                                    {/* Share Method Selection */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-600 mb-2">Share Method:</label>
+                                        <div className="grid grid-cols-2 gap-3 mb-4">
+                                            <motion.button
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => {
+                                                    setShareMethod('link');
+                                                    setShareWalletAddress('');
+                                                }}
+                                                className={`px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                                                    shareMethod === 'link'
+                                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                🔗 Share Link
+                                            </motion.button>
+                                            <motion.button
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => {
+                                                    setShareMethod('wallet');
+                                                    setGeneratedShareLink('');
+                                                }}
+                                                className={`px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                                                    shareMethod === 'wallet'
+                                                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                👥 Share with Wallet
+                                            </motion.button>
+                                        </div>
+                                    </div>
+
+                                    {/* Wallet Address Input (for wallet sharing) */}
+                                    {shareMethod === 'wallet' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200"
+                                        >
+                                            <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                                👤 Recipient Wallet Address:
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={shareWalletAddress}
+                                                onChange={(e) => setShareWalletAddress(e.target.value)}
+                                                placeholder="Enter Polkadot wallet address (e.g., 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY)"
+                                                className="w-full px-4 py-3 bg-white border-2 border-purple-300 rounded-xl text-xs sm:text-sm font-mono text-gray-800 focus:outline-none focus:border-purple-500 transition-colors"
+                                            />
+                                            <p className="text-xs text-gray-600 mt-2">
+                                                💡 This person will see this file in their "Shared With Me" tab
+                                            </p>
+                                        </motion.div>
+                                    )}
+
                                     {/* Share Type Selection */}
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">Share Type:</label>
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1 sm:mb-2">Access Duration:</label>
                                         <select
                                             value={shareOption}
                                             onChange={(e) => {
@@ -925,7 +1088,7 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                             onClick={handleGrantAccess}
                                             className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-base shadow-xl hover:shadow-2xl transition-all"
                                         >
-                                            🔗 Generate Share Link
+                                            {shareMethod === 'wallet' ? '👥 Share with Wallet' : '🔗 Generate Share Link'}
                                         </motion.button>
                                     )}
                                 </div>
@@ -950,8 +1113,13 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                                         whileTap={{ scale: 0.98 }}
                                         onClick={() => {
                                             setShareModal(null);
+                                            setShareMethod('link');
                                             setShareOption('one-time');
+                                            setShareWalletAddress('');
                                             setGeneratedShareLink('');
+                                            setCustomStartDate('');
+                                            setCustomEndDate('');
+                                            setCustomDays(0);
                                         }}
                                         className="w-full py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
                                     >
