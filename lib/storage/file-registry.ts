@@ -87,6 +87,7 @@ export function clearFiles(walletAddress: string): void {
 
 /**
  * Register a file shared with a wallet address
+ * This stores the file metadata in the recipient's localStorage
  */
 export function registerSharedFile(recipientWallet: string, fileMetadata: any): void {
     try {
@@ -100,9 +101,15 @@ export function registerSharedFile(recipientWallet: string, fileMetadata: any): 
             sharedFiles.push(fileMetadata);
             localStorage.setItem(sharedFilesKey, JSON.stringify(sharedFiles));
             console.log(`📤 Registered shared file ${fileMetadata.cid} for ${recipientWallet.slice(0, 8)}...`);
+            console.log(`   File: ${fileMetadata.fileName}`);
+            console.log(`   Has encryption key: ${!!fileMetadata.encryptionKey}`);
+            console.log(`   Has IV: ${!!fileMetadata.iv}`);
+        } else {
+            console.log(`⚠️ File ${fileMetadata.cid} already shared with ${recipientWallet.slice(0, 8)}...`);
         }
     } catch (e) {
-        console.warn('Failed to register shared file:', e);
+        console.error('❌ Failed to register shared file:', e);
+        throw e;
     }
 }
 
@@ -115,26 +122,39 @@ export function getSharedFiles(walletAddress: string): any[] {
         const stored = localStorage.getItem(sharedFilesKey);
         
         if (!stored) {
+            console.log(`📭 No shared files found for ${walletAddress.slice(0, 8)}...`);
             return [];
         }
 
         const sharedFiles = JSON.parse(stored);
+        console.log(`📦 Found ${sharedFiles.length} files in shared storage`);
         
         // Filter out expired files
         const now = new Date();
         const validFiles = sharedFiles.filter((file: any) => {
             if (!file.expiresAt) return true; // Permanent access
-            return new Date(file.expiresAt) > now;
+            const expiryDate = new Date(file.expiresAt);
+            const isValid = expiryDate > now;
+            if (!isValid) {
+                console.log(`⏰ File ${file.cid} expired on ${expiryDate.toLocaleString()}`);
+            }
+            return isValid;
         });
 
         // Update storage if any files were filtered
         if (validFiles.length !== sharedFiles.length) {
             localStorage.setItem(sharedFilesKey, JSON.stringify(validFiles));
+            console.log(`🧹 Cleaned up ${sharedFiles.length - validFiles.length} expired files`);
         }
+
+        // Log details for debugging
+        validFiles.forEach((file: any) => {
+            console.log(`   ✓ ${file.fileName} (${file.cid.substring(0, 12)}...) - Shared by ${file.sharedBy?.slice(0, 8)}...`);
+        });
 
         return validFiles.reverse(); // Most recent first
     } catch (e) {
-        console.warn('Failed to get shared files:', e);
+        console.error('❌ Failed to get shared files:', e);
         return [];
     }
 }

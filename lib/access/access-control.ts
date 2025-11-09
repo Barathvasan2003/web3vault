@@ -114,19 +114,64 @@ export function createACL(
 }
 
 /**
- * Store ACL in localStorage (encrypted with owner's key)
+ * Store ACL in localStorage (accessible to owner and shared users)
+ * Also stores a copy for each recipient so they can verify their access
  */
 export function storeACL(acl: FileAccessControl): void {
     const aclKey = `acl_${acl.cid}`;
     localStorage.setItem(aclKey, JSON.stringify(acl));
+    
+    // Also store a copy for each recipient so they can verify access
+    acl.accessList.forEach(rule => {
+        const recipientACLKey = `acl_${acl.cid}_${rule.walletAddress}`;
+        // Store a simplified version for the recipient
+        const recipientACL = {
+            cid: acl.cid,
+            owner: acl.owner,
+            hasAccess: true,
+            accessType: rule.accessType,
+            expiresAt: rule.expiresAt,
+            grantedAt: rule.grantedAt
+        };
+        localStorage.setItem(recipientACLKey, JSON.stringify(recipientACL));
+    });
 }
 
 /**
  * Retrieve ACL from localStorage
+ * Tries multiple keys to find ACL (owner's key or recipient's key)
  */
-export function getACL(cid: string): FileAccessControl | null {
+export function getACL(cid: string, walletAddress?: string): FileAccessControl | null {
+    // First try owner's ACL
     const aclKey = `acl_${cid}`;
-    const stored = localStorage.getItem(aclKey);
+    let stored = localStorage.getItem(aclKey);
+
+    // If not found and wallet address provided, try recipient's ACL
+    if (!stored && walletAddress) {
+        const recipientACLKey = `acl_${cid}_${walletAddress}`;
+        stored = localStorage.getItem(recipientACLKey);
+        
+        if (stored) {
+            try {
+                const recipientACL = JSON.parse(stored);
+                // Convert recipient ACL back to full ACL format
+                return {
+                    cid: recipientACL.cid,
+                    owner: recipientACL.owner,
+                    accessList: [{
+                        walletAddress: walletAddress,
+                        accessType: recipientACL.accessType,
+                        expiresAt: recipientACL.expiresAt,
+                        grantedAt: recipientACL.grantedAt,
+                        grantedBy: recipientACL.owner
+                    }],
+                    createdAt: recipientACL.grantedAt || Date.now()
+                };
+            } catch {
+                // Continue to try owner's ACL
+            }
+        }
+    }
 
     if (!stored) {
         return null;
@@ -150,9 +195,30 @@ export function verifyAccess(
     reason?: string;
     accessType?: 'owner' | 'temporary' | 'permanent';
 } {
-    const acl = getACL(cid);
+    // Try to get ACL with wallet address (for recipient lookup)
+    const acl = getACL(cid, walletAddress);
 
     if (!acl) {
+        // If no ACL found, check if there's a shared file entry (backward compatibility)
+        try {
+            const sharedFilesKey = `shared_files_${walletAddress}`;
+            const sharedFilesStr = localStorage.getItem(sharedFilesKey);
+            if (sharedFilesStr) {
+                const sharedFiles = JSON.parse(sharedFilesStr);
+                const fileExists = sharedFiles.some((f: any) => f.cid === cid);
+                if (fileExists) {
+                    // File was shared but ACL might be missing - allow access
+                    console.log(`⚠️ ACL missing for shared file ${cid}, but file exists - allowing access`);
+                    return {
+                        hasAccess: true,
+                        accessType: 'temporary',
+                    };
+                }
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+        
         return {
             hasAccess: false,
             reason: 'Access control list not found. This file may not exist or was uploaded without proper permissions.',

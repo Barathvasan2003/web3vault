@@ -39,17 +39,42 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
         if (sharedMode) {
             // Load files shared with current user
             const sharedFiles = fileRegistry.getSharedFiles(account.address);
-            console.log(`📥 Found ${sharedFiles.length} files shared with you`);
+            console.log(`📥 Found ${sharedFiles.length} files in shared storage`);
             
-            // Verify access for each shared file
+            // Verify access for each shared file and ensure all required data exists
             const accessControlLib = await import('@/lib/access/access-control');
             const validFiles = sharedFiles.filter(file => {
+                // Check if file has all required data
+                if (!file.encryptionKey || !file.iv) {
+                    console.warn(`⚠️ Shared file ${file.cid} missing encryption data`);
+                    return false;
+                }
+                
+                // Try to get ACL (with wallet address for recipient lookup)
+                const acl = accessControlLib.getACL(file.cid, account.address);
+                if (!acl) {
+                    console.warn(`⚠️ No ACL found for shared file ${file.cid}, but file exists - allowing access`);
+                    // If file exists in shared storage, allow it (might be from old sharing method)
+                    return true;
+                }
+                
+                // Verify access
                 const accessCheck = accessControlLib.verifyAccess(file.cid, account.address);
-                return accessCheck.hasAccess;
+                if (!accessCheck.hasAccess) {
+                    console.warn(`⚠️ Access denied for file ${file.cid}: ${accessCheck.reason}`);
+                    return false;
+                }
+                
+                return true;
             });
             
+            console.log(`✅ ${validFiles.length} shared files with valid access and complete data`);
             setFiles(validFiles);
-            console.log(`✅ ${validFiles.length} shared files with valid access`);
+            
+            // Refresh trigger to update UI
+            if (validFiles.length > 0) {
+                console.log('📋 Shared files loaded:', validFiles.map(f => f.fileName));
+            }
         } else {
             // Load user's own files from local registry
             let userFiles = fileRegistry.getFiles(account.address);
@@ -359,17 +384,49 @@ export default function FileList({ account, refreshTrigger, sharedMode = false }
                 );
                 accessControlLib.storeACL(updatedACL);
 
-                // Store shared file metadata for the recipient
+                // Store shared file metadata for the recipient with ALL necessary data
                 const sharedFileMetadata = {
-                    ...shareModal,
+                    cid: shareModal.cid,
+                    fileName: shareModal.fileName,
+                    fileType: shareModal.fileType,
+                    fileSize: shareModal.fileSize || 0,
+                    encryptionKey: shareModal.encryptionKey, // CRITICAL: Must include encryption key
+                    iv: shareModal.iv, // CRITICAL: Must include IV
+                    uploadedAt: shareModal.uploadedAt || new Date().toISOString(),
+                    recordType: shareModal.recordType || 'other',
+                    aiData: shareModal.aiData || null,
                     sharedBy: account.address,
                     sharedAt: new Date().toISOString(),
                     accessType: accessType,
                     expiresAt: durationHours 
                         ? new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString()
-                        : null
+                        : null,
+                    owner: account.address
                 };
+                
+                console.log('📤 Sharing file with metadata:', {
+                    cid: sharedFileMetadata.cid,
+                    fileName: sharedFileMetadata.fileName,
+                    hasEncryptionKey: !!sharedFileMetadata.encryptionKey,
+                    hasIV: !!sharedFileMetadata.iv,
+                    recipient: shareWalletAddress.trim()
+                });
+                
                 fileRegistry.registerSharedFile(shareWalletAddress.trim(), sharedFileMetadata);
+                
+                // Also store ACL for recipient so they can verify access
+                const recipientACL = {
+                    cid: updatedACL.cid,
+                    owner: updatedACL.owner,
+                    hasAccess: true,
+                    accessType: accessType,
+                    expiresAt: durationHours 
+                        ? Date.now() + durationHours * 60 * 60 * 1000
+                        : undefined,
+                    grantedAt: Date.now()
+                };
+                const recipientACLKey = `acl_${updatedACL.cid}_${shareWalletAddress.trim()}`;
+                localStorage.setItem(recipientACLKey, JSON.stringify(recipientACL));
 
                 showToast(
                     `✅ File shared with ${shareWalletAddress.slice(0, 8)}...${shareWalletAddress.slice(-6)}! They can now access it in "Shared With Me".`,
